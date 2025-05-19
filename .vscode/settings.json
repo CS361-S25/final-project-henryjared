@@ -76,5 +76,6 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/henrycoyle65536/cs361artificialLife/final-project-henryjared/Empirical/third-party/Catch"
 }
