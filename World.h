@@ -4,8 +4,14 @@
 #include "emp/Evolve/World.hpp"
 #include "emp/math/random_utils.hpp"
 #include "emp/math/Random.hpp"
+#include "emp/data/DataFile.hpp"
 
-class World {
+/**
+ * The Daisyworld system, which updates the amount of white and black daisies
+ * based on temperature. There are no agents in the world, rather, it inherits from
+ * Empirical's world to have access to data files.
+ */
+class World : emp::World<float> {
     
     // the proportion of ground that is covered by the different types of daisies, from 0 to 1
     float proportionWhite;
@@ -17,6 +23,11 @@ class World {
     // whether black/white daisies are allowed to exist
     bool blackDaisiesEnabled;
     bool whiteDaisiesEnabled;
+
+    // whether daisies can grow or die
+    bool daisiesCanGrowAndDie;
+
+    emp::DataMonitor<float>* temperatureMonitor;
 
     // the albedos of the different colored flowers
     const float whiteAlbedo = 0.75;
@@ -38,17 +49,26 @@ class World {
     // the death rate of daisies per time
     const float deathRate = 0.3;
 
+    // how much time is incremented each time Update is called
+    const float timePerUpdate = 0.01;
+
     public:
 
     /**
      * Initializes a starting solar luminosity and flower populations
      */
-    World(float _percentWhite, float _percentBlack, float _solarLuminosity) : proportionWhite(_percentWhite), proportionBlack(_percentBlack), solarLuminosity(_solarLuminosity) {}
+    World(float _percentWhite, float _percentBlack, float _solarLuminosity) : proportionWhite(_percentWhite), proportionBlack(_percentBlack), solarLuminosity(_solarLuminosity) {
+        whiteDaisiesEnabled = true;
+        blackDaisiesEnabled = true;
+        daisiesCanGrowAndDie = true;
+        update = 0;
+    }
 
     /**
      * @returns the proportion of the planet that is not covered by daisies
      */
     float GetProportionGround() {
+        // equation (2) of Daisyworld paper
         return 1 - proportionWhite - proportionBlack;
     }
 
@@ -136,6 +156,13 @@ class World {
     }
 
     /**
+     * Enables or disables changes in the amounts of daisies
+     */
+    void SetDaisyGrowthAndDeath(bool _daisiesCanGrowAndDie) {
+        daisiesCanGrowAndDie = _daisiesCanGrowAndDie;
+    }
+
+    /**
      * @param localTemperature The local temperature over this type of flower
      * @returns the growth rate on bare ground of this type of daisy
      */
@@ -158,6 +185,45 @@ class World {
     float BlackGrowthRate() {
         // equation (1) from Daisyworld paper
         return proportionBlack * (GrowthRateFunction(GetTemperatureOfBlackFlowers()) * GetProportionGround() - deathRate);
+    }
+
+    /**
+     * Performs one time step, allowing the daisies to grow and die according to temperature as long as growth and
+     * death are not disabled
+     */
+    void Update() {
+        emp::World<float>::Update();
+        if (daisiesCanGrowAndDie) {
+            // the amount that each type of daisy grows this update
+            float whiteGrowthAmount = WhiteGrowthRate() * timePerUpdate;
+            float blackGrowthAmount = BlackGrowthRate() * timePerUpdate;
+            // update the amounts of each type of daisy if they are enabled
+            if (whiteDaisiesEnabled) proportionWhite += whiteGrowthAmount;
+            if (blackDaisiesEnabled) proportionBlack += blackGrowthAmount;
+            // clamp values below at 0
+            if (proportionWhite < 0.0) proportionWhite = 0.0;
+            if (proportionBlack < 0.0) proportionBlack = 0.0;
+            
+        }
+    }
+
+    /**
+     * Sets up a data file tracking the time, solar luminosity, amounts of daisies, and global temperature of Daisyworld
+     * @returns the data file
+     */
+    emp::DataFile& SetupDataFile(const std::string& fileName) {
+        emp::DataFile& file = SetupFile(fileName);
+        // add variables to the data file
+        file.AddVar(update, "t", "update");
+        file.AddVar(solarLuminosity, "L", "Solar luminosity");
+        file.AddVar(proportionWhite, "a_w", "Proportion of white daisies");
+        file.AddVar(proportionBlack, "a_b", "Proportion of black daisies");
+        // calculate the temperature each time the data file is written
+        std::function<float()> temperatureFunction = [this]() { return GetGlobalTemperature(); };
+        file.AddFun<float>(temperatureFunction, "temp", "Global temperature");
+        // finish setting up the file
+        file.PrintHeaderKeys();
+        return file;
     }
 };
 
