@@ -20,6 +20,8 @@ class Animator : public emp::web::Animate {
     const double height{num_h_boxes * RECT_SIDE};
 
     emp::web::Canvas canvas{width, height, "canvas"};
+    emp::Random random{444};
+
     World world{0.5, 0.5, 1.0};
 
     // 2D grid to store the color of each cell
@@ -74,6 +76,29 @@ public:
         }
     }
 
+    void UpdateThermometer() {
+
+        float temp = world.GetGlobalTemperature();
+        float min_temp = 0; // adjust as needed
+        float max_temp = 70;  // adjust as needed
+        float percent = (temp - min_temp) / (max_temp - min_temp);
+        percent = std::max(0.0f, std::min(1.0f, percent)); // clamp between 0 and 1
+
+        int bar_height = 200;
+        int fill_height = static_cast<int>(bar_height * percent);
+
+        std::stringstream ss;
+        ss << "<div style='width:40px; height:" << bar_height << "px; border:1px solid #333; background:#eee; position:relative;'>";
+        ss << "<div style='position:absolute; bottom:0; width:100%; height:" << fill_height << "px; background:#f55;'></div>";
+        ss << "<div style='position:absolute; top:0; width:100%; text-align:center; font-size:1em;'>";
+        ss << std::setprecision(1) << std::fixed << temp << "°C</div>";
+        ss << "</div>";
+
+        emp::web::Document doc_thermo("thermometer");
+        doc_thermo.Clear();
+        doc_thermo << ss.str();
+    }
+
 
     void DoFrame() override {
 
@@ -82,6 +107,7 @@ public:
 
         UpdateGrid();
         Draw();
+        UpdateThermometer();
     }
 };
 
