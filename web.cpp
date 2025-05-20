@@ -28,13 +28,12 @@ class Animator : public emp::web::Animate {
     std::vector<std::vector<std::string>> grid;
 
 public:
-
+    
     Animator() {
 
         doc << canvas;
         doc << GetToggleButton("Toggle");
         doc << GetStepButton("Step");
-
         UpdateGrid();
     }
 
@@ -79,8 +78,8 @@ public:
     void UpdateThermometer() {
 
         float temp = world.GetGlobalTemperature();
-        float min_temp = 0; // adjust as needed
-        float max_temp = 70;  // adjust as needed
+        float min_temp = 0;
+        float max_temp = 70;
         float percent = (temp - min_temp) / (max_temp - min_temp);
         percent = std::max(0.0f, std::min(1.0f, percent)); // clamp between 0 and 1
 
@@ -99,6 +98,36 @@ public:
         doc_thermo << ss.str();
     }
 
+    void UpdateSun() {
+
+        float lum = world.GetSolarLuminosity();
+
+        // Clamp and scale for display
+        float min_lum = 0;
+        float max_lum = 2;
+        float percent = (lum - min_lum) / (max_lum - min_lum);
+        percent = std::max(0.0f, std::min(1.0f, percent));
+
+        // Sun size and color
+        int radius = 50;
+
+        // Color: from pale yellow to bright yellow
+        int color_val = static_cast<int>(200 + percent * 55); // 200-255
+        std::stringstream color;
+        color << "rgb(" << color_val << "," << color_val << ",0)";
+
+        std::stringstream ss;
+        ss << "<svg width='150' height='150'>";
+        ss << "<circle cx='75' cy='75' r='" << radius << "' fill='" << color.str() << "' stroke='#aaa' stroke-width='4'/>";
+        ss << "<text x='75' y='80' text-anchor='middle' font-size='20' fill='#333'>" 
+        << std::setprecision(1) << std::fixed << lum << "</text>";
+        ss << "</svg>";
+
+        emp::web::Document doc_sun("sun");
+        doc_sun.Clear();
+        doc_sun << ss.str();
+    }
+
 
     void DoFrame() override {
 
@@ -108,6 +137,7 @@ public:
         UpdateGrid();
         Draw();
         UpdateThermometer();
+        UpdateSun();
     }
 };
 
