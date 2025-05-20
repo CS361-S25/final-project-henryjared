@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     world2.SetWhiteEnabled(false);
 
     // output data every 100 updates (1 time unit)
-    world2.SetupDataFile("black.data").SetTimingRepeat(100);
+    world2.SetupDataFile("black.csv").SetTimingRepeat(100);
 
     // update the world 10000 times (100 time units)
     for (int i=0; i<10001; i++) {
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     World world3(0.5, 0.5, 1);
 
     // output data every 100 updates (1 time unit)
-    world3.SetupDataFile("black_and_white.data").SetTimingRepeat(100);
+    world3.SetupDataFile("black_and_white.csv").SetTimingRepeat(100);
     
     // update the world 10000 times (100 time units)
     for (int i=0; i<10001; i++) {
