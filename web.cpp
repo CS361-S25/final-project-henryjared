@@ -7,6 +7,7 @@
 #include "World.h"
 
 emp::web::Document doc{"target"};
+emp::web::Document buttons("buttons");
 
 class Animator : public emp::web::Animate {
 
@@ -32,8 +33,8 @@ public:
     Animator() {
 
         doc << canvas;
-        doc << GetToggleButton("Toggle");
-        doc << GetStepButton("Step");
+        buttons << GetToggleButton("Toggle");
+        buttons << GetStepButton("Step");
         UpdateGrid();
     }
 
