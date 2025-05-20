@@ -33,6 +33,11 @@ public:
         doc << GetToggleButton("Toggle");
         doc << GetStepButton("Step");
 
+        UpdateGrid();
+    }
+
+    void UpdateGrid() {
+
         // Calculate the number of each color
         int total_cells = num_h_boxes * num_w_boxes;
         int num_black = (total_cells * world.GetProportionBlack());
@@ -55,11 +60,8 @@ public:
         }
     }
 
+    void Draw() {
 
-    void DoFrame() override {
-
-        canvas.Clear();
-        world.Update();
         for (int y = 0; y < num_h_boxes; ++y) {
             for (int x = 0; x < num_w_boxes; ++x) {
                 std::string color = grid[y][x];
@@ -67,9 +69,19 @@ public:
                 if (color == "black") fill = "black";
                 else if (color == "white") fill = "white";
                 else fill = "green";
-                canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE, fill, "gray");
+                canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE, fill, "black");
             }
         }
+    }
+
+
+    void DoFrame() override {
+
+        canvas.Clear();
+        world.Update();
+
+        UpdateGrid();
+        Draw();
     }
 };
 
