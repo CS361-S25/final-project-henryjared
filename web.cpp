@@ -21,9 +21,8 @@ class Animator : public emp::web::Animate {
     const double height{num_h_boxes * RECT_SIDE};
 
     emp::web::Canvas canvas{width, height, "canvas"};
-    emp::Random random{444};
 
-    World world{0.5, 0.5, 2};
+    World world{0.5, 0.5, 1};
 
     // 2D grid to store the color of each cell
     std::vector<std::vector<std::string>> grid;
@@ -49,6 +48,8 @@ public:
      */
     void UpdateGrid() {
 
+            emp::Random random{444};
+
         // Calculate the number of each color
         int total_cells = num_h_boxes * num_w_boxes;
         int num_black = (total_cells * world.GetProportionBlack());
@@ -61,7 +62,13 @@ public:
         cells.insert(cells.end(), num_white, "white");
         cells.insert(cells.end(), num_green, "green");
 
-        // Fill the grid
+        // Shuffle the cells for random placement
+        for (int i = cells.size() - 1; i > 0; --i) {
+            int j = random.GetUInt(i + 1);
+            std::swap(cells[i], cells[j]);
+        }
+
+        // Fill the grid with shuffled cells
         grid.resize(num_h_boxes, std::vector<std::string>(num_w_boxes));
         int idx = 0;
         for (int y = 0; y < num_h_boxes; ++y) {
