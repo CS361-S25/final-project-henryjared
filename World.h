@@ -201,8 +201,8 @@ class World : emp::World<float> {
             if (whiteDaisiesEnabled) proportionWhite += whiteGrowthAmount;
             if (blackDaisiesEnabled) proportionBlack += blackGrowthAmount;
             // clamp values below at 0
-            if (proportionWhite < 0.0) proportionWhite = 0.0;
-            if (proportionBlack < 0.0) proportionBlack = 0.0;
+            if (proportionWhite < 0.001) proportionWhite = 0.0;
+            if (proportionBlack < 0.001) proportionBlack = 0.0;
             
         }
     }
@@ -224,6 +224,25 @@ class World : emp::World<float> {
         // finish setting up the file
         file.PrintHeaderKeys();
         return file;
+    }
+
+    /**
+     * How many updates must be run to simulate one time unit in this world
+     */
+    float GetUpdatesPerTimeUnit() {
+        return 1.0 / timePerUpdate;
+    }
+
+    /**
+     * If the black/white daisies have gone extinct, set their proportion to some small value so they may get started again
+     */
+    void BoostDaisiesIfExtinct(float whiteBoost = 0.01, float blackBoost = 0.01) {
+        if (whiteDaisiesEnabled && proportionWhite < whiteBoost) {
+            proportionWhite = whiteBoost;
+        }
+        if (blackDaisiesEnabled && proportionBlack < blackBoost) {
+            proportionBlack = blackBoost;
+        }
     }
 };
 
