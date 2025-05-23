@@ -153,5 +153,5 @@ int main(int argc, char* argv[]) {
     // Expected output: some daisies survive from around luminosities 0.7 to 1.55. Black daisies dominate at the lower end, and white daisies
     // dominate at the upper end. Between these luminosities, the daisies keep the planet around 22.5 Celcius (optimal growing temperature),
     // reaching a minimum at luminosity about 1.4. The Daisyworld paper did not investigate falling luminosities in this scenario.
-    TestRaisingAndLoweringLuminosity(true, true, "black_and_white.csv");
+    TestRaisingAndLoweringLuminosity(true, true, "black_and_white.csv", 0.5, 1.7, 0.01, 500);
 };
