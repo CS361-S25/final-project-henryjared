@@ -16,7 +16,7 @@ class Animator : public emp::web::Animate {
     // that represent the daisies in the world
     const int num_h_boxes = 10;
     const int num_w_boxes = 10;
-    const double RECT_SIDE = 30;
+    const double RECT_SIDE = 25;
     const double width{num_w_boxes * RECT_SIDE};
     const double height{num_h_boxes * RECT_SIDE};
 
