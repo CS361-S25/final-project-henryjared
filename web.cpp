@@ -19,6 +19,18 @@ class Animator : public emp::web::Animate {
     const double RECT_SIDE = 25;
     const double width{num_w_boxes * RECT_SIDE};
     const double height{num_h_boxes * RECT_SIDE};
+    
+    // these constants determine how the world slowly changes in luminosity over time
+    const float min_luminosity = 0.5;
+    const float max_luminosity = 1.7;
+    const float luminosity_change_per_frame = 0.001;
+    const float world_time_per_frame = 0.1;
+
+    // the current luminosity of the world
+    float luminosity = 1.0;
+
+    // whether the luminosity is currently on its part of the cycle where it is increasing
+    bool increasing_luminosity = true;
 
     emp::web::Canvas canvas{width, height, "canvas"};
 
@@ -59,8 +71,9 @@ public:
         // Create a flat vector to represent all cells
         std::vector<std::string> cells;
         cells.insert(cells.end(), num_black, "black");
+        cells.insert(cells.end(), num_green, "rgb(88, 139, 75)");
         cells.insert(cells.end(), num_white, "white");
-        cells.insert(cells.end(), num_green, "green");
+        
 
         // Shuffle the cells for random placement
         for (int i = cells.size() - 1; i > 0; --i) {
@@ -117,7 +130,7 @@ public:
         float temp = world.GetGlobalTemperature();
 
         // Define the minimum and maximum temperature for the thermometer scale
-        float min_temp = 0;
+        float min_temp = -20;
         float max_temp = 70;
 
         float percent = (temp - min_temp) / (max_temp - min_temp);
@@ -139,6 +152,23 @@ public:
     }
 
     /**
+     * Changes the luminosity a tiny amount each frame in a triangle wave
+     */
+    void UpdateLuminosity() {
+        if (increasing_luminosity) {
+            luminosity += luminosity_change_per_frame;
+            // turn around when reach top
+            if (luminosity >= max_luminosity) increasing_luminosity = false;
+        } else {
+            luminosity -= luminosity_change_per_frame;
+            // turn around when reach top
+            if (luminosity <= min_luminosity) increasing_luminosity = true;
+        }
+        world.SetSolarLuminosity(luminosity);
+        world.BoostDaisiesIfExtinct();
+    }
+
+    /**
      * @brief Updates the sun visualization in the web interface based on the current solar luminosity.
      *
      * This function retrieves the current solar luminosity from the world object, clamps and scales it
@@ -149,9 +179,7 @@ public:
         float lum = world.GetSolarLuminosity();
 
         // Clamp and scale for display
-        float min_lum = 0;
-        float max_lum = 2;
-        float percent = (lum - min_lum) / (max_lum - min_lum);
+        float percent = (lum - min_luminosity) / (max_luminosity - min_luminosity);
         percent = std::max(0.0f, std::min(1.0f, percent));
 
         // Sun size
@@ -166,7 +194,7 @@ public:
         ss << "<svg width='150' height='150'>";
         ss << "<circle cx='60' cy='75' r='" << radius << "' fill='" << color.str() << "' stroke='#aaa'/>";
         ss << "<text x='60' y='80' text-anchor='middle' font-size='20' fill='#333'>" 
-        << std::setprecision(1) << std::fixed << lum << "</text>";
+        << std::setprecision(2) << std::fixed << lum << "</text>";
         ss << "</svg>";
 
         emp::web::Document doc_sun("sun");
@@ -178,12 +206,16 @@ public:
     void DoFrame() override {
 
         canvas.Clear();
-        world.Update();
+        int number_of_updates = world.GetUpdatesPerTimeUnit() * world_time_per_frame;
+        for (int update = 0; update < number_of_updates; update++) {
+            world.Update();
+        }
 
         UpdateGrid();
         Draw();
         UpdateThermometer();
         UpdateSun();
+        UpdateLuminosity();
     }
 };
 
