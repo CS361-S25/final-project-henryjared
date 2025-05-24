@@ -14,10 +14,10 @@ void TestTemperatureCalculations() {
     std::cout << "Global Temperature: " << world.GetGlobalTemperature() << std::endl;
 
     // expected output: around 31
-    std::cout << "Temperature of Black Daisies: " << world.GetTemperatureOfBlackFlowers() << std::endl;
+    std::cout << "Temperature of Black Daisies: " << world.GetTemperatureOfAlbedo(0.75) << std::endl;
     
     // expected output: around 21
-    std::cout << "Temperature of White Daisies: " << world.GetTemperatureOfWhiteFlowers() << std::endl;
+    std::cout << "Temperature of White Daisies: " << world.GetTemperatureOfAlbedo(0.25) << std::endl;
 }
 
 /**
@@ -71,6 +71,8 @@ void TestConstantLuminosityBlackAndWhite() {
 void UpdateWorldTimes(World& world, int updates) {
     for (int update = 0; update < updates; update++) {
         world.Update();
+        // boost the daisies halfway through to allow them to respond to other types of daisies growing
+        if (update == updates / 2) world.BoostDaisiesIfExtinct();
     }
 }
 
@@ -97,11 +99,13 @@ void TestWorldAtLuminosity(World& world, float luminosity, int updates) {
  * @param luminosityStep how finely to change the luminosity
  * @param timePerLuminosity how long in time units to allow the world to stabilize after the luminosity has changed
  */
-void TestRaisingAndLoweringLuminosity(bool whiteEnabled, bool blackEnabled, std::string outputFile, float minLuminosity = 0.5, float maxLuminosity = 1.7, float luminosityStep = 0.01, int timePerLuminosity = 50) {
+void TestRaisingAndLoweringLuminosity(bool whiteEnabled, bool blackEnabled, std::string outputFile, float minLuminosity = 0.5, float maxLuminosity = 1.7, float luminosityStep = 0.01, int timePerLuminosity = 50, float grayEnabled = false) {
     // setup world with the first luminosity value
-    World world(whiteEnabled ? 0.5 : 0.0, blackEnabled ? 0.5 : 0.0, minLuminosity);
+    // when all 3 are enabled, each starts with 0.33, otherwise, each starts with 0.5 as long as it's enabled
+    World world(whiteEnabled ? (blackEnabled && grayEnabled ? 0.33 : 0.5) : 0.0, blackEnabled ? (whiteEnabled && grayEnabled ? 0.33 : 0.5) : 0.0, minLuminosity, (grayEnabled ? (whiteEnabled && blackEnabled ? 0.33 : 0.5) : 0.0));
     world.SetWhiteEnabled(whiteEnabled);
     world.SetBlackEnabled(blackEnabled);
+    world.SetGrayEnabled(grayEnabled);
     // how many updates to do before switching the luminosity
     int updatesPerLuminosity = timePerLuminosity * world.GetUpdatesPerTimeUnit();
     // record data once per luminosity, at the last update where the world is that luminosity
@@ -154,4 +158,14 @@ int main(int argc, char* argv[]) {
     // dominate at the upper end. Between these luminosities, the daisies keep the planet around 22.5 Celcius (optimal growing temperature),
     // reaching a minimum at luminosity about 1.4. The Daisyworld paper did not investigate falling luminosities in this scenario.
     TestRaisingAndLoweringLuminosity(true, true, "black_and_white.csv", 0.5, 1.7, 0.01, 500);
+
+    // Test 8 (extension 1): how does the world react when there are only gray daisies, that are the same albedo as the ground, corresponding to graph (a) of Daisyworld paper
+    // Expected output: same temperature as without any daisies. Gray daisies exist from luminosities 0.8 to 1.2
+    // and peak around 1.0.
+    TestRaisingAndLoweringLuminosity(false, false, "gray.csv", 0.5, 1.7, 0.01, 50, true);
+
+    // Test 9 (extension 1): how does the world react when there are white, gray, and black daisies?
+    // Not tested in Daisyworld paper. Prediction: the gray daisies will take up room and reduce the ability for white and black daisies
+    // to stabilize the environment.
+    TestRaisingAndLoweringLuminosity(true, true, "white_black_and_gray.csv", 0.5, 1.7, 0.01, 500, true);
 };

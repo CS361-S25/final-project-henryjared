@@ -12,10 +12,103 @@
  * Empirical's world to have access to data files.
  */
 class World : emp::World<float> {
+
+    struct GroundCover {
+        // the proportion of ground that is covered by the different types of daisies, from 0 to 1
+        float proportionWhite;
+        float proportionBlack;
+        float proportionGray;
+
+        public:
+
+        GroundCover(float _proportionWhite, float _proportionBlack, float _proportionGray = 0.0) : proportionWhite(_proportionWhite), proportionBlack(_proportionBlack), proportionGray(_proportionGray) {}
+
+        /**
+         * @returns the proportion of the world that is covered by white daisies, from 0 to 1
+         */
+        float GetProportionWhite() {
+            return proportionWhite;
+        }
+
+        /**
+         * @returns the proportion of the world that is covered by black daisies, from 0 to 1
+         */
+        float GetProportionBlack() {
+            return proportionBlack;
+        }
+
+        /**
+         * @returns the proportion of the world that is covered by gray daisies, from 0 to 1
+         */
+        float GetProportionGray() {
+            return proportionGray;
+        }
+
+        /**
+         * @returns the proportion of the planet that is not covered by daisies
+         */
+        float GetProportionGround() {
+            // equation (2) of Daisyworld paper
+            return 1 - proportionWhite - proportionBlack - proportionGray;
+        }
+
+        /**
+         * sets the proprotion of white daisies
+         */
+        void SetProportionWhite(float _proportionWhite) {
+            proportionWhite = _proportionWhite;
+        }
+
+        /**
+         * sets the proprotion of black daisies
+         */
+        void SetProportionBlack(float _proportionBlack) {
+            proportionBlack = _proportionBlack;
+        }
+
+        /**
+         * sets the proprotion of white daisies
+         */
+        void SetProportionGray(float _proportionGray) {
+            proportionGray = _proportionGray;
+        }
+
+        /**
+         * Increments the white proportion by delta, clamping between 0 and 1
+         */
+        void IncrementWhiteAmount(float delta) {
+            proportionWhite += delta;
+            // clamp values below at 0, don't allow tiny amounts of daisies
+            if (proportionWhite < 0.001) proportionWhite = 0.0;
+        }
+
+        /**
+         * Increments the black proportion by delta, clamping between 0 and 1
+         */
+        void IncrementBlackAmount(float delta) {
+            proportionBlack += delta;
+            // clamp values below at 0, don't allow tiny amounts of daisies
+            if (proportionBlack < 0.001) proportionBlack = 0.0;
+        }
+
+        /**
+         * Increments the gray proportion by delta, clamping between 0 and 1
+         */
+        void IncrementGrayAmount(float delta) {
+            proportionGray += delta;
+            // clamp values below at 0, don't allow tiny amounts of daisies
+            if (proportionGray < 0.001) proportionGray = 0.0;
+        }
+
+        /**
+         * @returns a weighted average of the albedos of the different types of flowers
+         */
+        float GetTotalAlbedo(float whiteAlbedo, float blackAlbedo, float groundAlbedo, float grayAlbedo) {
+            return (proportionWhite * whiteAlbedo) + (proportionBlack * blackAlbedo) + (GetProportionGround() * groundAlbedo) + (proportionGray * grayAlbedo);
+        }
+    };
     
-    // the proportion of ground that is covered by the different types of daisies, from 0 to 1
-    float proportionWhite;
-    float proportionBlack;
+    GroundCover ground;
     
     // dimensionless scaling factor for solar luminosity
     float solarLuminosity;
@@ -23,6 +116,7 @@ class World : emp::World<float> {
     // whether black/white daisies are allowed to exist
     bool blackDaisiesEnabled;
     bool whiteDaisiesEnabled;
+    bool grayDaisiesEnabled;
 
     // whether daisies can grow or die
     bool daisiesCanGrowAndDie;
@@ -32,6 +126,7 @@ class World : emp::World<float> {
     // the albedos of the different colored flowers
     const float whiteAlbedo = 0.75;
     const float blackAlbedo = 0.25;
+    const float grayAlbedo = 0.5;
     const float groundAlbedo = 0.5;
     
     // stefan's constant in units of ergs / (second * cm^2 * K^4)
@@ -57,26 +152,19 @@ class World : emp::World<float> {
     /**
      * Initializes a starting solar luminosity and flower populations
      */
-    World(float _percentWhite, float _percentBlack, float _solarLuminosity) : proportionWhite(_percentWhite), proportionBlack(_percentBlack), solarLuminosity(_solarLuminosity) {
+    World(float _proportionWhite, float _proportionBlack, float _solarLuminosity, float _proportionGray = 0.0) : ground(_proportionWhite, _proportionBlack, _proportionGray), solarLuminosity(_solarLuminosity) {
         whiteDaisiesEnabled = true;
         blackDaisiesEnabled = true;
+        grayDaisiesEnabled = false;
         daisiesCanGrowAndDie = true;
         update = 0;
     }
 
     /**
-     * @returns the proportion of the planet that is not covered by daisies
-     */
-    float GetProportionGround() {
-        // equation (2) of Daisyworld paper
-        return 1 - proportionWhite - proportionBlack;
-    }
-
-    /**
-     * @returns a weighted average of albedos of the different flowers
+     * @returns the averaged total albedo over the entire planet (how much sunlight is reflected in aggregate)
      */
     float GetTotalAlbedo() {
-        return (proportionWhite * whiteAlbedo) + (proportionBlack * blackAlbedo) + (GetProportionGround() * groundAlbedo);
+        return ground.GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo);
     }
     
     /**
@@ -92,19 +180,13 @@ class World : emp::World<float> {
     }
 
     /**
-     * @returns the local temperature over areas with black flowers, based on black flowers' albedo and conduction from global temperature
+     * Gets the local temperature of the flowers depending on global temperature and their albedo
+     * @param albedo The albedo of the local flowers
+     * @returns the local temperature over areas with flowers of that albedo, based on global temperature
      */
-    float GetTemperatureOfBlackFlowers() {
+    float GetTemperatureOfAlbedo(float localAlbedo) {
         // equation (7) of Daisyworld
-        return conductivityConstant * (GetTotalAlbedo() - blackAlbedo) + GetGlobalTemperature();
-    }
-
-    /**
-     * @returns the local temperature over areas with white flowers, based on white flowers' albedo and conduction from global temperature
-     */
-    float GetTemperatureOfWhiteFlowers() {
-        // equation (7) of Daisyworld
-        return conductivityConstant * (GetTotalAlbedo() - whiteAlbedo) + GetGlobalTemperature();
+        return conductivityConstant * (GetTotalAlbedo() - localAlbedo) + GetGlobalTemperature();
     }
 
     /**
@@ -125,14 +207,28 @@ class World : emp::World<float> {
      * @returns the proportion of the world that is covered by white daisies, from 0 to 1
      */
     float GetProportionWhite() {
-        return proportionWhite;
+        return ground.GetProportionWhite();
     }
 
     /**
      * @returns the proportion of the world that is covered by black daisies, from 0 to 1
      */
     float GetProportionBlack() {
-        return proportionBlack;
+        return ground.GetProportionBlack();
+    }
+
+    /**
+     * @returns the proportion of the world that is covered by gray daisies, from 0 to 1
+     */
+    float GetProportionGray() {
+        return ground.GetProportionGray();
+    }
+
+    /**
+     * @returns the proportion of the world that is not covered by daisies, from 0 to 1
+     */
+    float GetProportionGround() {
+        return ground.GetProportionGround();
     }
 
     /**
@@ -141,7 +237,7 @@ class World : emp::World<float> {
     void SetBlackEnabled(bool _blackEnabled) {
         blackDaisiesEnabled = _blackEnabled;
         if (!_blackEnabled) {
-            proportionBlack = 0.0;
+            ground.SetProportionBlack(0.0);
         }
     }
 
@@ -151,7 +247,17 @@ class World : emp::World<float> {
     void SetWhiteEnabled(bool _whiteEnabled) {
         whiteDaisiesEnabled = _whiteEnabled;
         if (!_whiteEnabled) {
-            proportionWhite = 0.0;
+            ground.SetProportionWhite(0.0);
+        }
+    }
+
+    /**
+     * Enabled or disables gray daisies. If disabled, sets their population to 0
+     */
+    void SetGrayEnabled(bool _grayEnabled) {
+        grayDaisiesEnabled = _grayEnabled;
+        if (!_grayEnabled) {
+            ground.SetProportionGray(0.0);
         }
     }
 
@@ -176,7 +282,7 @@ class World : emp::World<float> {
      */
     float WhiteGrowthRate() {
         // equation (1) from Daisyworld paper
-        return proportionWhite * (GrowthRateFunction(GetTemperatureOfWhiteFlowers()) * GetProportionGround() - deathRate);
+        return GetProportionWhite() * (GrowthRateFunction(GetTemperatureOfAlbedo(whiteAlbedo)) * GetProportionGround() - deathRate);
     }
 
     /**
@@ -184,7 +290,15 @@ class World : emp::World<float> {
      */
     float BlackGrowthRate() {
         // equation (1) from Daisyworld paper
-        return proportionBlack * (GrowthRateFunction(GetTemperatureOfBlackFlowers()) * GetProportionGround() - deathRate);
+        return GetProportionBlack() * (GrowthRateFunction(GetTemperatureOfAlbedo(blackAlbedo)) * GetProportionGround() - deathRate);
+    }
+
+    /**
+     * @returns the rate of change of the proportion of gray daisies per unit time
+     */
+    float GrayGrowthRate() {
+        // equation (1) from Daisyworld paper
+        return GetProportionGray() * (GrowthRateFunction(GetTemperatureOfAlbedo(grayAlbedo)) * GetProportionGround() - deathRate);
     }
 
     /**
@@ -197,13 +311,11 @@ class World : emp::World<float> {
             // the amount that each type of daisy grows this update
             float whiteGrowthAmount = WhiteGrowthRate() * timePerUpdate;
             float blackGrowthAmount = BlackGrowthRate() * timePerUpdate;
+            float grayGrowthAmount = GrayGrowthRate() * timePerUpdate;
             // update the amounts of each type of daisy if they are enabled
-            if (whiteDaisiesEnabled) proportionWhite += whiteGrowthAmount;
-            if (blackDaisiesEnabled) proportionBlack += blackGrowthAmount;
-            // clamp values below at 0
-            if (proportionWhite < 0.001) proportionWhite = 0.0;
-            if (proportionBlack < 0.001) proportionBlack = 0.0;
-            
+            if (whiteDaisiesEnabled) ground.IncrementWhiteAmount(whiteGrowthAmount);
+            if (blackDaisiesEnabled) ground.IncrementBlackAmount(blackGrowthAmount);
+            if (grayDaisiesEnabled) ground.IncrementGrayAmount(grayGrowthAmount);
         }
     }
 
@@ -216,11 +328,13 @@ class World : emp::World<float> {
         // add variables to the data file
         file.AddVar(update, "t", "update");
         file.AddVar(solarLuminosity, "L", "Solar luminosity");
-        file.AddVar(proportionWhite, "a_w", "Proportion of white daisies");
-        file.AddVar(proportionBlack, "a_b", "Proportion of black daisies");
+        file.AddFun<float>([this]() { return GetProportionWhite(); }, "a_w", "Proportion of white daisies");
+        file.AddFun<float>([this]() { return GetProportionBlack(); }, "a_b", "Proportion of black daisies");
+        if (grayDaisiesEnabled) {
+            file.AddFun<float>([this]() { return GetProportionGray(); }, "a_g", "Proportion of gray daisies");
+        }
         // calculate the temperature each time the data file is written
-        std::function<float()> temperatureFunction = [this]() { return GetGlobalTemperature(); };
-        file.AddFun<float>(temperatureFunction, "temp", "Global temperature");
+        file.AddFun<float>([this]() { return GetGlobalTemperature(); }, "temp", "Global temperature");
         // finish setting up the file
         file.PrintHeaderKeys();
         return file;
@@ -236,12 +350,15 @@ class World : emp::World<float> {
     /**
      * If the black/white daisies have gone extinct, set their proportion to some small value so they may get started again
      */
-    void BoostDaisiesIfExtinct(float whiteBoost = 0.01, float blackBoost = 0.01) {
-        if (whiteDaisiesEnabled && proportionWhite < whiteBoost) {
-            proportionWhite = whiteBoost;
+    void BoostDaisiesIfExtinct(float whiteBoost = 0.01, float blackBoost = 0.01, float grayBoost = 0.01) {
+        if (whiteDaisiesEnabled && GetProportionWhite() < whiteBoost) {
+            ground.SetProportionWhite(whiteBoost);;
         }
-        if (blackDaisiesEnabled && proportionBlack < blackBoost) {
-            proportionBlack = blackBoost;
+        if (blackDaisiesEnabled && GetProportionBlack() < blackBoost) {
+            ground.SetProportionBlack(blackBoost);
+        }
+        if (grayDaisiesEnabled && GetProportionGray() < grayBoost) {
+            ground.SetProportionGray(grayBoost);
         }
     }
 };
