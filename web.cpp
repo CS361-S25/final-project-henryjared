@@ -4,10 +4,17 @@
 #include "emp/math/Random.hpp"
 #include "emp/web/Animate.hpp"
 #include "emp/web/web.hpp"
+#include "emp/web/Document.hpp"
+#include "emp/config/ArgManager.hpp"
+#include "emp/prefab/ConfigPanel.hpp"
+#include "emp/web/UrlParams.hpp"
+
+#include "ConfigSetup.h"
 #include "World.h"
 
 emp::web::Document doc{"target"};
 emp::web::Document buttons("buttons");
+MyConfigType config;
 
 class Animator : public emp::web::Animate {
 
@@ -21,8 +28,8 @@ class Animator : public emp::web::Animate {
     const double height{num_h_boxes * RECT_SIDE};
     
     // these constants determine how the world slowly changes in luminosity over time
-    const float min_luminosity = 0.5;
-    const float max_luminosity = 1.7;
+    const float min_luminosity = 0.001;
+    const float max_luminosity = 2;
     const float luminosity_change_per_frame = 0.001;
     const float world_time_per_frame = 0.1;
 
@@ -43,13 +50,25 @@ public:
     
     Animator() {
 
+        // apply configuration query params and config files to config
+        auto specs = emp::ArgManager::make_builtin_specs(&config);
+        emp::ArgManager am(emp::web::GetUrlParams(), specs);
+        am.UseCallbacks();
+        if (am.HasUnused()) std::exit(EXIT_FAILURE);
+
+        // setup configuration panel
+        emp::prefab::ConfigPanel config_panel(config);
+        config_panel.SetRange("LUMINOSITY", "0.001", "2.000");
+
+        luminosity = config.LUMINOSITY();
+        world.SetSolarLuminosity(luminosity);
+
         doc << canvas;
         buttons << GetToggleButton("Toggle");
         buttons << GetStepButton("Step");
+        buttons << config_panel;
         UpdateGrid();
     }
-
-
 
     /**
      * @brief Updates the grid with a new distribution of cell colors.
@@ -60,7 +79,7 @@ public:
      */
     void UpdateGrid() {
 
-            emp::Random random{444};
+        emp::Random random{444};
 
         // Calculate the number of each color
         int total_cells = num_h_boxes * num_w_boxes;
