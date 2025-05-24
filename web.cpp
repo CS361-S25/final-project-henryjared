@@ -28,8 +28,8 @@ class Animator : public emp::web::Animate {
     const double height{num_h_boxes * RECT_SIDE};
     
     // these constants determine how the world slowly changes in luminosity over time
-    const float min_luminosity = 0.001;
-    const float max_luminosity = 2;
+    const float min_luminosity = 0.5;
+    const float max_luminosity = 1.7;
     const float luminosity_change_per_frame = 0.001;
     const float world_time_per_frame = 0.1;
 
@@ -46,6 +46,8 @@ class Animator : public emp::web::Animate {
     // 2D grid to store the color of each cell
     std::vector<std::vector<std::string>> grid;
 
+    bool grayEnabled;
+
 public:
     
     Animator() {
@@ -58,10 +60,12 @@ public:
 
         // setup configuration panel
         emp::prefab::ConfigPanel config_panel(config);
-        config_panel.SetRange("LUMINOSITY", "0.001", "2.000");
+        config_panel.SetRange("LUMINOSITY", "0.5", "1.7");
 
         luminosity = config.LUMINOSITY();
+        grayEnabled = config.ENABLE_GRAY();
         world.SetSolarLuminosity(luminosity);
+        world.SetGrayEnabled(grayEnabled);
 
         doc << canvas;
         buttons << GetToggleButton("Toggle");
@@ -85,12 +89,15 @@ public:
         int total_cells = num_h_boxes * num_w_boxes;
         int num_black = (total_cells * world.GetProportionBlack());
         int num_white = (total_cells * world.GetProportionWhite());
-        int num_green = total_cells - num_black - num_white;
+        int num_gray = (total_cells * world.GetProportionGray());
+        std::cout << std::to_string(num_gray) << std::endl;
+        int num_green = total_cells - num_black - num_white - num_gray;
 
         // Create a flat vector to represent all cells
         std::vector<std::string> cells;
         cells.insert(cells.end(), num_black, "black");
-        cells.insert(cells.end(), num_green, "rgb(88, 139, 75)");
+        cells.insert(cells.end(), num_green, "rgb(88,139,75)");
+        cells.insert(cells.end(), num_gray, "rgb(119, 119, 119)");
         cells.insert(cells.end(), num_white, "white");
         
 
@@ -123,12 +130,7 @@ public:
             for (int x = 0; x < num_w_boxes; ++x) {
                 // Get the color for the current cell
                 std::string color = grid[y][x];
-                std::string fill;
-
-                // Determine the fill color based on the cell's value
-                if (color == "black") fill = "black";
-                else if (color == "white") fill = "white";
-                else fill = "green"; // Default to green for any other value
+                std::string fill = color;
 
                 // Draw the rectangle at the correct position with the chosen color
                 canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE, fill, "black");
@@ -235,6 +237,7 @@ public:
         UpdateThermometer();
         UpdateSun();
         UpdateLuminosity();
+        std::cout << std::to_string(world.GetProportionGray()) << std::endl;
     }
 };
 
