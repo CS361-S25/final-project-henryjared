@@ -99,10 +99,10 @@ void TestWorldAtLuminosity(World& world, float luminosity, int updates) {
  * @param luminosityStep how finely to change the luminosity
  * @param timePerLuminosity how long in time units to allow the world to stabilize after the luminosity has changed
  */
-void TestRaisingAndLoweringLuminosity(bool whiteEnabled, bool blackEnabled, std::string outputFile, float minLuminosity = 0.5, float maxLuminosity = 1.7, float luminosityStep = 0.01, int timePerLuminosity = 50, float grayEnabled = false) {
+void TestRaisingAndLoweringLuminosity(bool whiteEnabled, bool blackEnabled, std::string outputFile, float minLuminosity = 0.5, float maxLuminosity = 1.7, float luminosityStep = 0.01, int timePerLuminosity = 50, bool grayEnabled = false, bool roundWorld = false) {
     // setup world with the first luminosity value
     // when all 3 are enabled, each starts with 0.33, otherwise, each starts with 0.5 as long as it's enabled
-    World world(whiteEnabled ? (blackEnabled && grayEnabled ? 0.33 : 0.5) : 0.0, blackEnabled ? (whiteEnabled && grayEnabled ? 0.33 : 0.5) : 0.0, minLuminosity, (grayEnabled ? (whiteEnabled && blackEnabled ? 0.33 : 0.5) : 0.0));
+    World world(whiteEnabled ? (blackEnabled && grayEnabled ? 0.33 : 0.5) : 0.0, blackEnabled ? (whiteEnabled && grayEnabled ? 0.33 : 0.5) : 0.0, minLuminosity, (grayEnabled ? (whiteEnabled && blackEnabled ? 0.33 : 0.5) : 0.0), roundWorld);
     world.SetWhiteEnabled(whiteEnabled);
     world.SetBlackEnabled(blackEnabled);
     world.SetGrayEnabled(grayEnabled);
@@ -168,4 +168,9 @@ int main(int argc, char* argv[]) {
     // Not tested in Daisyworld paper. Prediction: the gray daisies will take up room and reduce the ability for white and black daisies
     // to stabilize the environment.
     TestRaisingAndLoweringLuminosity(true, true, "white_black_and_gray.csv", 0.5, 1.7, 0.01, 500, true);
+
+    // Test 10 (extension 2): what if the world is round and different latitudes recieve different amounts of sunlight?
+    // Not tested in Daisyworld paper. Prediction: white daisies will thrive at lower latitudes while black daisies thrive at higher latitudes.
+    // Daisies will persist on the world for a wider range of solar luminosities, which will stabilize the temperature for also a wider range of luminosities.
+    TestRaisingAndLoweringLuminosity(true, true, "white_black_round.csv", 0.5, 1.7, 0.01, 5, false, true);
 };
