@@ -65,7 +65,7 @@ class World : emp::World<float> {
         /**
          * @returns a weighted average of the albedos of the different types of flowers
          */
-        float GetTotalAlbedo(float whiteAlbedo, float blackAlbedo, float groundAlbedo, float grayAlbedo) {
+        float GetTotalAlbedo() {
             return (proportionWhite * whiteAlbedo) + (proportionBlack * blackAlbedo) + (GetProportionGround() * groundAlbedo) + (proportionGray * grayAlbedo);
         }
     };
@@ -95,10 +95,10 @@ class World : emp::World<float> {
     emp::DataMonitor<float>* temperatureMonitor;
 
     // the albedos of the different colored flowers
-    const float whiteAlbedo = 0.75;
-    const float blackAlbedo = 0.25;
-    const float grayAlbedo = 0.5;
-    const float groundAlbedo = 0.5;
+    static constexpr float whiteAlbedo = 0.75;
+    static constexpr float blackAlbedo = 0.25;
+    static constexpr float grayAlbedo = 0.5;
+    static constexpr float groundAlbedo = 0.5;
     
     // stefan's constant in units of ergs / (second * cm^2 * K^4)
     const float stefansConstant = 0.0000567;
@@ -152,7 +152,7 @@ class World : emp::World<float> {
      * This function times solarLuminosity times fluxConstant is the light flux reaching this latitude.
      */
     float GetLuminosityMultiplierAtLatitude(int latitude) {
-        return minLuminosityMultiplier + (maxLuminosityMultiplier - minLuminosityMultiplier) / 9 * latitude;
+        return minLuminosityMultiplier + (maxLuminosityMultiplier - minLuminosityMultiplier) / (numberOfLatitudes - 1) * latitude;
     }
 
     /**
@@ -162,7 +162,7 @@ class World : emp::World<float> {
         if (roundWorld) {
             return GetAverageAlbedoOnRoundPlanet();
         } else {
-            return ground.GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo);
+            return ground.GetTotalAlbedo();
         }
     }
 
@@ -174,8 +174,9 @@ class World : emp::World<float> {
         float totalGlobalAbsorbsion = 0.0;
         for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
             GroundCover groundAtLatitude = groundAtLatitudes[latitude];
-            float AlbedoAtLatitude = groundAtLatitude.GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo);
-            totalGlobalAbsorbsion += GetLuminosityMultiplierAtLatitude(latitude) * AlbedoAtLatitude / numberOfLatitudes;
+            float AlbedoAtLatitude = groundAtLatitude.GetTotalAlbedo();
+            float AbsorbsionAtLatitude = 1 - AlbedoAtLatitude;
+            totalGlobalAbsorbsion += GetLuminosityMultiplierAtLatitude(latitude) * AbsorbsionAtLatitude / numberOfLatitudes;
         }
         return 1 - totalGlobalAbsorbsion;
     }
@@ -216,6 +217,20 @@ class World : emp::World<float> {
         float localAbsorbtivity = 1 - localAlbedo;
         float scaledLocalAbsorbtivity = localAbsorbtivity * GetLuminosityMultiplierAtLatitude(latitude);
         return conductivityConstant * (scaledLocalAbsorbtivity - globalAbsorbtivity) + globalTemperature;
+    }
+
+    /**
+     * Gets the average temperature at one latitude on the planet
+     * @param latitude The latitude on the planet, ranging from 0 (polar) to 9 (equitorial)
+     * @param globalTemperatue The temperature of the planet before this update
+     * @param globalAlbedo The aggregate global albedo of the planet before this update
+     */
+    float GetTemperatureOfLatitude(int latitude, float globalTemperature, float globalAlbedo) {
+        // based on equation (7) of Daisyworld
+        float latitudalAbsorbtivity = 1 - groundAtLatitudes[latitude].GetTotalAlbedo();
+        float scaledLatitudalAbsorbtivity = latitudalAbsorbtivity * GetLuminosityMultiplierAtLatitude(latitude);
+        float globalAbsorbtivity = 1 - globalAlbedo;
+        return conductivityConstant * (scaledLatitudalAbsorbtivity - globalAbsorbtivity) + globalTemperature;
     }
 
     /**
@@ -563,11 +578,18 @@ class World : emp::World<float> {
                 file.AddFun<float>([this]() { return GetAverageLatitudeOfGray(); }, "l_g", "Average latitude of gray daisies");
             }
             // DEBUG
-            file.AddFun<float>([this]() { return GetTemperatureOfAlbedoAtLatitude(groundAtLatitudes[0].GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo), 0, GetGlobalTemperature(), GetTotalAlbedo()); }, "t_0", "temp at 0");
-            file.AddFun<float>([this]() { return GetTemperatureOfAlbedoAtLatitude(groundAtLatitudes[2].GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo), 2, GetGlobalTemperature(), GetTotalAlbedo()); }, "t_2", "temp at 2");
-            file.AddFun<float>([this]() { return GetTemperatureOfAlbedoAtLatitude(groundAtLatitudes[4].GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo), 4, GetGlobalTemperature(), GetTotalAlbedo()); }, "t_4", "temp at 4");
-            file.AddFun<float>([this]() { return GetTemperatureOfAlbedoAtLatitude(groundAtLatitudes[6].GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo), 6, GetGlobalTemperature(), GetTotalAlbedo()); }, "t_6", "temp at 6");
-            file.AddFun<float>([this]() { return GetTemperatureOfAlbedoAtLatitude(groundAtLatitudes[9].GetTotalAlbedo(whiteAlbedo, blackAlbedo, groundAlbedo, grayAlbedo), 9, GetGlobalTemperature(), GetTotalAlbedo()); }, "t_9", "temp at 9");
+            /*
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(0); }, "a_b_0", "amount black at 0");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(1); }, "a_b_1", "amount black at 1");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(2); }, "a_b_2", "amount black at 2");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(3); }, "a_b_3", "amount black at 3");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(4); }, "a_b_4", "amount black at 4");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(5); }, "a_b_5", "amount black at 5");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(6); }, "a_b_6", "amount black at 6");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(7); }, "a_b_7", "amount black at 7");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(8); }, "a_b_8", "amount black at 8");
+            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(9); }, "a_b_9", "amount black at 9");
+            */
         }
         // calculate the temperature each time the data file is written
         file.AddFun<float>([this]() { return GetGlobalTemperature(); }, "temp", "Global temperature");

@@ -98,6 +98,8 @@ void TestWorldAtLuminosity(World& world, float luminosity, int updates) {
  * @param maxLuminosity maximum dimensionless solar luminosity
  * @param luminosityStep how finely to change the luminosity
  * @param timePerLuminosity how long in time units to allow the world to stabilize after the luminosity has changed
+ * @param grayEnabled whether to allow gray daisies to grow
+ * @param roundWorld whether to have different daisy populations and sunlight at different latitudes of the world
  */
 void TestRaisingAndLoweringLuminosity(bool whiteEnabled, bool blackEnabled, std::string outputFile, float minLuminosity = 0.5, float maxLuminosity = 1.7, float luminosityStep = 0.01, int timePerLuminosity = 50, bool grayEnabled = false, bool roundWorld = false) {
     // setup world with the first luminosity value
@@ -162,17 +164,32 @@ int main(int argc, char* argv[]) {
     // Test 8 (extension 1): how does the world react when there are only gray daisies, that are the same albedo as the ground, corresponding to graph (a) of Daisyworld paper
     // Expected output: same temperature as without any daisies. Gray daisies exist from luminosities 0.8 to 1.2
     // and peak around 1.0.
-    TestRaisingAndLoweringLuminosity(false, false, "gray.csv", 0.5, 1.7, 0.01, 2.5, true);
+    TestRaisingAndLoweringLuminosity(false, false, "gray.csv", 0.5, 1.7, 0.01, 2, true);
 
     // Test 9 (extension 1): how does the world react when there are white, gray, and black daisies?
     // Not tested in Daisyworld paper. Prediction: the gray daisies will take up room and reduce the ability for white and black daisies
     // to stabilize the environment.
     TestRaisingAndLoweringLuminosity(true, true, "white_black_and_gray.csv", 0.5, 1.7, 0.01, 500, true);
 
+    // Test 10 (extension 2): what if the world was round and different latitudes recieve different amounts of sunlight?
+    // Control test: baseline average temperature of planet without any daisies.
+    TestRaisingAndLoweringLuminosity(false, false, "no_daisies_round.csv", 0.5, 1.7, 0.01, 50, false, true);
+
+    // Test 11 (extension 2): A round world with only black daisies.
+    // Not tested in Daisyworld paper. Prediction: the center of the population of black daisies will move towards the poles as luminosity
+    // increases. Daisies will persist in the world for a wider range of luminosities.
     TestRaisingAndLoweringLuminosity(false, true, "black_round.csv", 0.5, 1.7, 0.01, 50, false, true);
 
-    // Test 10 (extension 2): what if the world is round and different latitudes recieve different amounts of sunlight?
+    // Test 12 (extension 2): A round world with only white daisies.
+    // Not tested in Daisyworld paper. Prediction: the center of the population of white daisies will move towards the poles as luminosity
+    // increases. White daisies will do better than black daisies did for higher luminosities. Daisies will persist in the world for a wider range of luminosities.
+    TestRaisingAndLoweringLuminosity(true, false, "white_round.csv", 0.5, 1.7, 0.01, 50, false, true);
+
+    // Test 13 (extension 2): A round world with both black and white daisies.
     // Not tested in Daisyworld paper. Prediction: white daisies will thrive at lower latitudes while black daisies thrive at higher latitudes.
     // Daisies will persist on the world for a wider range of solar luminosities, which will stabilize the temperature for also a wider range of luminosities.
-    TestRaisingAndLoweringLuminosity(true, true, "white_black_round.csv", 0.5, 1.7, 0.01, 50, false, true);
+    TestRaisingAndLoweringLuminosity(true, true, "white_black_round.csv", 0.5, 1.7, 0.01, 500, false, true);
+
+    // Test 14 (extension 1+2): A round world with white, black, and gray daisies.
+    TestRaisingAndLoweringLuminosity(true, true, "white_black_and_gray_round.csv", 0.5, 1.7, 0.01, 500, true, true);
 };
