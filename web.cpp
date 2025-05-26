@@ -31,7 +31,7 @@ class Animator : public emp::web::Animate {
     const float min_luminosity = 0.5;
     const float max_luminosity = 1.7;
     const float luminosity_change_per_frame = 0.001;
-    const float world_time_per_frame = 0.1;
+    const float world_time_per_frame = 0.5;
 
     // the current luminosity of the world
     float luminosity = 1.0;
