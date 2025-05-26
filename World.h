@@ -79,10 +79,10 @@ class World : emp::World<float> {
      * Whether the world is round. Flat worlds have a single homogenous population of daisies. Round worlds have
      * different populations of daisies at different latitudes. This determines while ground or groundAtLatitudes is used.
      */
-    bool roundWorld;
+    bool roundWorld = false;
     
     // dimensionless scaling factor for solar luminosity
-    float solarLuminosity;
+    float solarLuminosity = 1.0;
 
     // whether black/white daisies are allowed to exist
     bool blackDaisiesEnabled;
