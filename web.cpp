@@ -23,7 +23,7 @@ class Animator : public emp::web::Animate {
     // that represent the daisies in the world
     const int num_h_boxes = 10;
     const int num_w_boxes = 10;
-    const double RECT_SIDE = 25;
+    const double RECT_SIDE = 30;
     const double width{num_w_boxes * RECT_SIDE};
     const double height{num_h_boxes * RECT_SIDE};
     
@@ -96,8 +96,8 @@ public:
         // Create a flat vector to represent all cells
         std::vector<std::string> cells;
         cells.insert(cells.end(), num_black, "black");
-        cells.insert(cells.end(), num_green, "rgb(88,139,75)");
-        cells.insert(cells.end(), num_gray, "rgb(119, 119, 119)");
+        cells.insert(cells.end(), num_green, "green");
+        cells.insert(cells.end(), num_gray, "gray");
         cells.insert(cells.end(), num_white, "white");
         
 
@@ -130,10 +130,16 @@ public:
             for (int x = 0; x < num_w_boxes; ++x) {
                 // Get the color for the current cell
                 std::string color = grid[y][x];
-                std::string fill = color;
 
+                std::string src;
+
+                if (color == "black") {src = "images/black_daisy.png";}
+                else if (color == "white") {src = "images/white_daisy.png";}
+                else if (color == "gray") {src = "images/gray_daisy.png";}
+                else {src = "images/grass.png";}
+                
                 // Draw the rectangle at the correct position with the chosen color
-                canvas.Rect(x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE, fill, "black");
+                canvas.Image(src, x * RECT_SIDE, y * RECT_SIDE, RECT_SIDE, RECT_SIDE);
             }
         }
     }
