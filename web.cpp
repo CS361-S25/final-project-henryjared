@@ -167,9 +167,9 @@ public:
         int fill_height = static_cast<int>(bar_height * percent);
 
         std::stringstream ss;
-        ss << "<div style='width:100%; text-align:center; font-size:1em; margin-bottom:4px; margin-left:25px;'>";
+        ss << "<div style='width:100%; text-align:center; font-size:1em; margin-bottom:4px;'>";
         ss << std::setprecision(1) << std::fixed << temp << "°C</div>";
-        ss << "<div style='width:40px; height:" << bar_height << "px; border:1px solid #333; background:#eee; position:relative; margin-left:40px;'>";
+        ss << "<div style='width:40px; height:" << bar_height << "px; border:1px solid #333; background:#eee; position:relative; margin: 0 auto;'>";
         ss << "<div style='position:absolute; bottom:0; width:100%; height:" << fill_height << "px; background:#f55;'></div>";
         ss << "</div>";
 
@@ -210,7 +210,7 @@ public:
         percent = std::max(0.0f, std::min(1.0f, percent));
 
         // Sun size
-        int radius = 50;
+        int radius = 60;
 
         // Color: from yellow (255,255,0) to white (255,255,255)
         int color_val = static_cast<int>(percent * 255); // 0-255 for blue component
