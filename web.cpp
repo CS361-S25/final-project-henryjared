@@ -47,6 +47,7 @@ class Animator : public emp::web::Animate {
     std::vector<std::vector<std::string>> grid;
 
     bool grayEnabled;
+    bool latSim;
 
 public:
     
@@ -64,6 +65,8 @@ public:
 
         luminosity = config.LUMINOSITY();
         grayEnabled = config.ENABLE_GRAY();
+        latSim = config.ENABLE_LAT();
+        
         world.SetSolarLuminosity(luminosity);
         world.SetGrayEnabled(grayEnabled);
 
