@@ -25,7 +25,7 @@ class World : emp::World<float> {
         float proportionBlack;
         float proportionGray;
 
-        GroundCover(float _proportionWhite = 0.5f, float _proportionBlack = 0.5f, float _proportionGray = 0.0f) : proportionWhite(_proportionWhite), proportionBlack(_proportionBlack), proportionGray(_proportionGray) {}
+        GroundCover(float _proportionWhite = 0.33, float _proportionBlack = 0.33, float _proportionGray = 0.0) : proportionWhite(_proportionWhite), proportionBlack(_proportionBlack), proportionGray(_proportionGray) {}
 
         /**
          * @returns the proportion of the planet that is not covered by daisies
@@ -119,7 +119,10 @@ class World : emp::World<float> {
     const float timePerUpdate = 0.01;
 
     // the number of latitudes the round planet is subdivided into
-    static constexpr int numberOfLatitudes = 10;
+    static constexpr int numberOfLatitudes = 90;
+
+    // the number of latitudes that are visible on the display
+    static constexpr int numberOfDisplayedLatitudes = 10;
 
     /**
      * The proportion of ground covered by the different daisies at different latitudes.
@@ -222,15 +225,12 @@ class World : emp::World<float> {
     /**
      * Gets the average temperature at one latitude on the planet
      * @param latitude The latitude on the planet, ranging from 0 (polar) to 9 (equitorial)
-     * @param globalTemperatue The temperature of the planet before this update
-     * @param globalAlbedo The aggregate global albedo of the planet before this update
      */
-    float GetTemperatureOfLatitude(int latitude, float globalTemperature, float globalAlbedo) {
-        // based on equation (7) of Daisyworld
+    float GetTemperatureOfLatitude(int latitude) {
+        // based on equation (4) of Daisyworld
         float latitudalAbsorbtivity = 1 - groundAtLatitudes[latitude].GetTotalAlbedo();
         float scaledLatitudalAbsorbtivity = latitudalAbsorbtivity * GetLuminosityMultiplierAtLatitude(latitude);
-        float globalAbsorbtivity = 1 - globalAlbedo;
-        return conductivityConstant * (scaledLatitudalAbsorbtivity - globalAbsorbtivity) + globalTemperature;
+        return std::pow((fluxConstant * solarLuminosity * scaledLatitudalAbsorbtivity) / stefansConstant, 0.25) - celsiusToKelvin;
     }
 
     /**
@@ -309,34 +309,58 @@ class World : emp::World<float> {
 
     /**
      * On a round world, how much ground is covered by white daisies at this latitude.
-     * @param latitude The latitude on the planet, ranging from 0 (polar) to 9 (equitorial)
+     * @param latitude The displayed latitude of the planet, which may differ from the internal subdivision.
+     * By default, there are 10 latitude classes, from 0 (equatorial) to 9 (polar)
      */
     float GetProportionWhiteAtLatitude(int latitude) {
-        return groundAtLatitudes[latitude].proportionWhite;
+        int displayBandWidth = numberOfLatitudes / numberOfDisplayedLatitudes;
+        int totalDaisiesInBand = 0.0;
+        for (int internalLatitude = numberOfLatitudes - displayBandWidth * latitude - displayBandWidth; internalLatitude < numberOfLatitudes - displayBandWidth * latitude; internalLatitude++) {
+            totalDaisiesInBand += groundAtLatitudes[internalLatitude].proportionWhite / displayBandWidth;
+        }
+        return totalDaisiesInBand;
     }
 
     /**
      * On a round world, how much ground is covered by black daisies at this latitude.
-     * @param latitude The latitude on the planet, ranging from 0 (polar) to 9 (equitorial)
+     * @param latitude The displayed latitude of the planet, which may differ from the internal subdivision.
+     * By default, there are 10 latitude classes, from 0 (equatorial) to 9 (polar)
      */
     float GetProportionBlackAtLatitude(int latitude) {
-        return groundAtLatitudes[latitude].proportionBlack;
+        int displayBandWidth = numberOfLatitudes / numberOfDisplayedLatitudes;
+        int totalDaisiesInBand = 0.0;
+        for (int internalLatitude = numberOfLatitudes - displayBandWidth * latitude - displayBandWidth; internalLatitude < numberOfLatitudes - displayBandWidth * latitude; internalLatitude++) {
+            totalDaisiesInBand += groundAtLatitudes[internalLatitude].proportionBlack / displayBandWidth;
+        }
+        return totalDaisiesInBand;
     }
 
     /**
      * On a round world, how much ground is covered by gray daisies at this latitude.
-     * @param latitude The latitude on the planet, ranging from 0 (polar) to 9 (equitorial)
+     * @param latitude The displayed latitude of the planet, which may differ from the internal subdivision.
+     * By default, there are 10 latitude classes, from 0 (equatorial) to 9 (polar)
      */
     float GetProportionGrayAtLatitude(int latitude) {
-        return groundAtLatitudes[latitude].proportionGray;
+        int displayBandWidth = numberOfLatitudes / numberOfDisplayedLatitudes;
+        int totalDaisiesInBand = 0.0;
+        for (int internalLatitude = numberOfLatitudes - displayBandWidth * latitude - displayBandWidth; internalLatitude < numberOfLatitudes - displayBandWidth * latitude; internalLatitude++) {
+            totalDaisiesInBand += groundAtLatitudes[internalLatitude].proportionGray / displayBandWidth;
+        }
+        return totalDaisiesInBand;
     }
 
     /**
      * On a round world, how much ground is covered by bare ground (no daisies) at this latitude.
-     * @param latitude The latitude on the planet, ranging from 0 (polar) to 9 (equitorial)
+     * @param latitude The displayed latitude of the planet, which may differ from the internal subdivision.
+     * By default, there are 10 latitude classes, from 0 (equatorial) to 9 (polar)
      */
     float GetProportionGroundAtLatitude(int latitude) {
-        return groundAtLatitudes[latitude].GetProportionGround();
+        int displayBandWidth = numberOfLatitudes / numberOfDisplayedLatitudes;
+        int totalGroundInBand = 0.0;
+        for (int internalLatitude = numberOfLatitudes - displayBandWidth * latitude - displayBandWidth; internalLatitude < numberOfLatitudes - displayBandWidth * latitude; internalLatitude++) {
+            totalGroundInBand += groundAtLatitudes[internalLatitude].GetProportionGround() / displayBandWidth;
+        }
+        return totalGroundInBand;
     }
 
     /**
@@ -431,7 +455,7 @@ class World : emp::World<float> {
      * @returns the growth rate of white daisies per unit time
      */
     float WhiteGrowthRateAtLatitude(int latitude, float globalTemperature, float globalAlbedo) {
-        return GrowthRateOfColorAtLatitude(GetProportionWhiteAtLatitude(latitude), GetTemperatureOfAlbedoAtLatitude(whiteAlbedo, latitude, globalTemperature, globalAlbedo), latitude);
+        return GrowthRateOfColorAtLatitude(groundAtLatitudes[latitude].proportionWhite, GetTemperatureOfAlbedoAtLatitude(whiteAlbedo, latitude, globalTemperature, globalAlbedo), latitude);
     }
 
     /**
@@ -442,7 +466,7 @@ class World : emp::World<float> {
      * @returns the growth rate of black daisies per unit time
      */
     float BlackGrowthRateAtLatitude(int latitude, float globalTemperature, float globalAlbedo) {
-        return GrowthRateOfColorAtLatitude(GetProportionBlackAtLatitude(latitude), GetTemperatureOfAlbedoAtLatitude(blackAlbedo, latitude, globalTemperature, globalAlbedo), latitude);
+        return GrowthRateOfColorAtLatitude(groundAtLatitudes[latitude].proportionBlack, GetTemperatureOfAlbedoAtLatitude(blackAlbedo, latitude, globalTemperature, globalAlbedo), latitude);
     }
 
     /**
@@ -453,7 +477,7 @@ class World : emp::World<float> {
      * @returns the growth rate of gray daisies per unit time
      */
     float GrayGrowthRateAtLatitude(int latitude, float globalTemperature, float globalAlbedo) {
-        return GrowthRateOfColorAtLatitude(GetProportionGrayAtLatitude(latitude), GetTemperatureOfAlbedoAtLatitude(grayAlbedo, latitude, globalTemperature, globalAlbedo), latitude);
+        return GrowthRateOfColorAtLatitude(groundAtLatitudes[latitude].proportionGray, GetTemperatureOfAlbedoAtLatitude(grayAlbedo, latitude, globalTemperature, globalAlbedo), latitude);
     }
 
     /**
@@ -461,7 +485,7 @@ class World : emp::World<float> {
      */
     float GrowthRateOfColorAtLatitude(float proportionOfColor, float localTemperature, int latitude) {
         // equation (1) from Daisyworld paper
-        return proportionOfColor * (GrowthRateFunction(localTemperature) * GetProportionGroundAtLatitude(latitude) - deathRate);
+        return proportionOfColor * (GrowthRateFunction(localTemperature) * groundAtLatitudes[latitude].GetProportionGround() - deathRate);
     }
 
     /**
@@ -523,7 +547,7 @@ class World : emp::World<float> {
         }
         float totalLatitudeProportion = 0.0;
         for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
-            totalLatitudeProportion += latitude * GetProportionWhiteAtLatitude(latitude);
+            totalLatitudeProportion += latitude * groundAtLatitudes[latitude].proportionWhite;
         }
         return totalLatitudeProportion / GetProportionWhite() / numberOfLatitudes;
     }
@@ -537,7 +561,7 @@ class World : emp::World<float> {
         }
         float totalLatitudeProportion = 0.0;
         for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
-            totalLatitudeProportion += latitude * GetProportionBlackAtLatitude(latitude);
+            totalLatitudeProportion += latitude * groundAtLatitudes[latitude].proportionBlack;
         }
         return totalLatitudeProportion / GetProportionBlack() / numberOfLatitudes;
     }
@@ -551,9 +575,87 @@ class World : emp::World<float> {
         }
         float totalLatitudeProportion = 0.0;
         for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
-            totalLatitudeProportion += latitude * GetProportionGrayAtLatitude(latitude);
+            totalLatitudeProportion += latitude * groundAtLatitudes[latitude].proportionGray;
         }
         return totalLatitudeProportion / GetProportionGray() / numberOfLatitudes;
+    }
+
+    /**
+     * The maximum latitude at which white daisies exist on a round planet
+     * @returns -1 if no white daisies exist
+     */
+    int GetMaxLatitudeOfWhite() {
+        for (int latitude = numberOfLatitudes - 1; latitude >= 0; latitude--) {
+            if (groundAtLatitudes[latitude].proportionWhite > 0.0) {
+                return latitude;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * The maximum latitude at which black daisies exist on a round planet
+     * @returns -1 if no black daisies exist
+     */
+    int GetMaxLatitudeOfBlack() {
+        for (int latitude = numberOfLatitudes - 1; latitude >= 0; latitude--) {
+            if (groundAtLatitudes[latitude].proportionBlack > 0.0) {
+                return latitude;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * The maximum latitude at which gray daisies exist on a round planet
+     * @returns -1 if no gray daisies exist
+     */
+    int GetMaxLatitudeOfGray() {
+        for (int latitude = numberOfLatitudes - 1; latitude >= 0; latitude--) {
+            if (groundAtLatitudes[latitude].proportionGray > 0.0) {
+                return latitude;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * The minimum latitude at which white daisies exist on a round planet
+     * @returns numberOfLatitudes if no white daisies exist
+     */
+    int GetMinLatitudeOfWhite() {
+        for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
+            if (groundAtLatitudes[latitude].proportionWhite > 0.0) {
+                return latitude;
+            }
+        }
+        return numberOfLatitudes;
+    }
+
+    /**
+     * The minimum latitude at which black daisies exist on a round planet
+     * @returns numberOfLatitudes if no black daisies exist
+     */
+    int GetMinLatitudeOfBlack() {
+        for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
+            if (groundAtLatitudes[latitude].proportionBlack > 0.0) {
+                return latitude;
+            }
+        }
+        return numberOfLatitudes;
+    }
+
+    /**
+     * The minimum latitude at which gray daisies exist on a round planet
+     * @returns numberOfLatitudes if no gray daisies exist
+     */
+    int GetMinLatitudeOfGray() {
+        for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
+            if (groundAtLatitudes[latitude].proportionGray > 0.0) {
+                return latitude;
+            }
+        }
+        return numberOfLatitudes;
     }
 
     /**
@@ -572,24 +674,17 @@ class World : emp::World<float> {
         }
         // on a round world, add the average latitudes of each type of daisy
         if (roundWorld) {
-            file.AddFun<float>([this]() { return GetAverageLatitudeOfWhite(); }, "l_w", "Average latitude of white daisies");
-            file.AddFun<float>([this]() { return GetAverageLatitudeOfBlack(); }, "l_b", "Average latitude of black daisies");
+            file.AddFun<std::string>([this]() { float min = GetMinLatitudeOfWhite(); return min == numberOfLatitudes ? "" : std::to_string(min); }, "min_lat_w", "Minimum latitude of white daisies");
+            file.AddFun<std::string>([this]() { float mean = GetAverageLatitudeOfWhite(); return std::isnan(mean) ? "" : std::to_string(mean); }, "mean_lat_w", "Average latitude of white daisies");
+            file.AddFun<std::string>([this]() { float max = GetMaxLatitudeOfWhite(); return max < 0 ? "" : std::to_string(max); }, "max_lat_w", "Minimum latitude of white daisies");
+            file.AddFun<std::string>([this]() { float min = GetMinLatitudeOfBlack(); return min == numberOfLatitudes ? "" : std::to_string(min); }, "min_lat_b", "Minimum latitude of black daisies");
+            file.AddFun<std::string>([this]() { float mean = GetAverageLatitudeOfBlack(); return std::isnan(mean) ? "" : std::to_string(mean); }, "mean_lat_b", "Average latitude of black daisies");
+            file.AddFun<std::string>([this]() { float max = GetMaxLatitudeOfBlack(); return max < 0 ? "" : std::to_string(max); }, "max_lat_b", "Minimum latitude of black daisies");
             if (grayDaisiesEnabled) {
-                file.AddFun<float>([this]() { return GetAverageLatitudeOfGray(); }, "l_g", "Average latitude of gray daisies");
+                file.AddFun<std::string>([this]() { float min = GetMinLatitudeOfGray(); return min == numberOfLatitudes ? "" : std::to_string(min); }, "min_lat_g", "Minimum latitude of gray daisies");
+                file.AddFun<std::string>([this]() { float mean = GetAverageLatitudeOfGray(); return std::isnan(mean) ? "" : std::to_string(mean); }, "mean_lat_g", "Average latitude of gray daisies");
+                file.AddFun<std::string>([this]() { float max = GetMaxLatitudeOfGray(); return max < 0 ? "" : std::to_string(max); }, "max_lat_g", "Minimum latitude of gray daisies");
             }
-            // DEBUG
-            /*
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(0); }, "a_b_0", "amount black at 0");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(1); }, "a_b_1", "amount black at 1");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(2); }, "a_b_2", "amount black at 2");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(3); }, "a_b_3", "amount black at 3");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(4); }, "a_b_4", "amount black at 4");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(5); }, "a_b_5", "amount black at 5");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(6); }, "a_b_6", "amount black at 6");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(7); }, "a_b_7", "amount black at 7");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(8); }, "a_b_8", "amount black at 8");
-            file.AddFun<float>([this]() { return GetProportionBlackAtLatitude(9); }, "a_b_9", "amount black at 9");
-            */
         }
         // calculate the temperature each time the data file is written
         file.AddFun<float>([this]() { return GetGlobalTemperature(); }, "temp", "Global temperature");
@@ -630,15 +725,15 @@ class World : emp::World<float> {
      * may get started again.
      * @param The minimum amounts of each type of daisy
      */
-    void BoostDaisiesIfExtinctOnRoundWorld(float whiteBoost = 0.01, float blackBoost = 0.01, float grayBoost = 0.01) {
+    void BoostDaisiesIfExtinctOnRoundWorld(float whiteBoost = 0.001, float blackBoost = 0.001, float grayBoost = 0.001) {
         for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
-            if (whiteDaisiesEnabled && GetProportionWhiteAtLatitude(latitude) < whiteBoost) {
+            if (whiteDaisiesEnabled && groundAtLatitudes[latitude].proportionWhite < whiteBoost) {
                 groundAtLatitudes[latitude].proportionWhite = whiteBoost;
             }
-            if (blackDaisiesEnabled && GetProportionBlackAtLatitude(latitude) < blackBoost) {
+            if (blackDaisiesEnabled && groundAtLatitudes[latitude].proportionBlack < blackBoost) {
                 groundAtLatitudes[latitude].proportionBlack = blackBoost;
             }
-            if (grayDaisiesEnabled && GetProportionGrayAtLatitude(latitude) < grayBoost) {
+            if (grayDaisiesEnabled && groundAtLatitudes[latitude].proportionGray < grayBoost) {
                 groundAtLatitudes[latitude].proportionGray = grayBoost;
             }
         }
