@@ -246,7 +246,6 @@ public:
         UpdateThermometer();
         UpdateSun();
         UpdateLuminosity();
-        std::cout << std::to_string(world.GetProportionGray()) << std::endl;
     }
 };
 
