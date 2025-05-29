@@ -141,64 +141,64 @@ int main(int argc, char* argv[]) {
     // Test 4: get the temperature of the planet at each luminosity without daisies, corresponding to graph (a) in Daisyworld paper
     // Expected output: temperature is very negative (off graph) when luminosity is 0.5, is about 70 Celsius when luminosity is 1.7,
     // and increases monotonically and concave-down between those.
-    TestRaisingAndLoweringLuminosity(false, false, "no_daisies.csv");
+    TestRaisingAndLoweringLuminosity(false, false, "data/no_daisies.csv");
 
     std::cout << "Test 5" << std::endl;
     // Test 5: test how the world responds to different luminosities while there are only black daisies, corresponding to graph (b) in Daisyworld paper
     // Expected output: from luminosities 0.7 to 1.1, black daises are able to grow and make the global temperature about 30 Celsius. The Daisyworld
     // paper did not investigate falling luminosities in this scenario.
-    TestRaisingAndLoweringLuminosity(false, true, "black.csv");
+    TestRaisingAndLoweringLuminosity(false, true, "data/black.csv");
 
     std::cout << "Test 6" << std::endl;
     // Test 6: test how the world responds to different luminosities when there are only white daisies, corresponding to graph (c) in Daisyworld paper
     // Expected output: white daisies start growing at luminosity about 0.8 and survive until luminosity 1.6, when they abruptly go extinct.
     // For falling luminosities, white daisies don't start thriving until about luminosity 1.2, when they return to the previous curve.
     // While daisies survive, they keep the planet at about 15 to 25 Celsius.
-    TestRaisingAndLoweringLuminosity(true, false, "white.csv");
+    TestRaisingAndLoweringLuminosity(true, false, "data/white.csv");
 
     std::cout << "Test 7" << std::endl;
     // Test 7: how does the world respond to different luminosities when stabilized by both white and black daisies, corresponding to graph (d) of Daisyworld paper
     // Expected output: some daisies survive from around luminosities 0.7 to 1.55. Black daisies dominate at the lower end, and white daisies
     // dominate at the upper end. Between these luminosities, the daisies keep the planet around 22.5 Celcius (optimal growing temperature),
     // reaching a minimum at luminosity about 1.4. The Daisyworld paper did not investigate falling luminosities in this scenario.
-    TestRaisingAndLoweringLuminosity(true, true, "black_and_white.csv", 0.5, 1.7, 0.01, 500);
+    TestRaisingAndLoweringLuminosity(true, true, "data/black_and_white.csv", 0.5, 1.7, 0.01, 500);
 
     std::cout << "Test 8" << std::endl;
     // Test 8 (extension 1): how does the world react when there are only gray daisies, that are the same albedo as the ground, corresponding to graph (a) of Daisyworld paper
     // Expected output: same temperature as without any daisies. Gray daisies exist from luminosities 0.8 to 1.2
     // and peak around 1.0.
-    TestRaisingAndLoweringLuminosity(false, false, "gray.csv", 0.5, 1.7, 0.01, 2, true);
+    TestRaisingAndLoweringLuminosity(false, false, "data/gray.csv", 0.5, 1.7, 0.01, 2, true);
 
     std::cout << "Test 9" << std::endl;
     // Test 9 (extension 1): how does the world react when there are white, gray, and black daisies?
     // Not tested in Daisyworld paper. Prediction: the gray daisies will take up room and reduce the ability for white and black daisies
     // to stabilize the environment.
-    TestRaisingAndLoweringLuminosity(true, true, "white_black_and_gray.csv", 0.5, 1.7, 0.01, 500, true);
+    TestRaisingAndLoweringLuminosity(true, true, "data/white_black_and_gray.csv", 0.5, 1.7, 0.01, 500, true);
 
     std::cout << "Test 10" << std::endl;
     // Test 10 (extension 2): what if the world was round and different latitudes recieve different amounts of sunlight?
     // Control test: baseline average temperature of planet without any daisies.
-    TestRaisingAndLoweringLuminosity(false, false, "no_daisies_round.csv", 0.5, 1.7, 0.01, 50, false, true);
+    TestRaisingAndLoweringLuminosity(false, false, "data/no_daisies_round.csv", 0.5, 1.7, 0.01, 50, false, true);
 
     std::cout << "Test 11" << std::endl;
     // Test 11 (extension 2): A round world with only black daisies.
     // Not tested in Daisyworld paper. Prediction: the center of the population of black daisies will move towards the poles as luminosity
     // increases. Daisies will persist in the world for a wider range of luminosities.
-    TestRaisingAndLoweringLuminosity(false, true, "black_round.csv", 0.5, 1.7, 0.01, 50, false, true);
+    TestRaisingAndLoweringLuminosity(false, true, "data/black_round.csv", 0.5, 1.7, 0.01, 50, false, true);
 
     std::cout << "Test 12" << std::endl;
     // Test 12 (extension 2): A round world with only white daisies.
     // Not tested in Daisyworld paper. Prediction: the center of the population of white daisies will move towards the poles as luminosity
     // increases. White daisies will do better than black daisies did for higher luminosities. Daisies will persist in the world for a wider range of luminosities.
-    TestRaisingAndLoweringLuminosity(true, false, "white_round.csv", 0.5, 1.7, 0.01, 50, false, true);
+    TestRaisingAndLoweringLuminosity(true, false, "data/white_round.csv", 0.5, 1.7, 0.01, 50, false, true);
 
     std::cout << "Test 13" << std::endl;
     // Test 13 (extension 2): A round world with both black and white daisies.
     // Not tested in Daisyworld paper. Prediction: white daisies will thrive at lower latitudes while black daisies thrive at higher latitudes.
     // Daisies will persist on the world for a wider range of solar luminosities, which will stabilize the temperature for also a wider range of luminosities.
-    TestRaisingAndLoweringLuminosity(true, true, "white_black_round.csv", 0.5, 1.7, 0.01, 500, false, true);
+    TestRaisingAndLoweringLuminosity(true, true, "data/white_black_round.csv", 0.5, 1.7, 0.01, 500, false, true);
 
     std::cout << "Test 14" << std::endl;
     // Test 14 (extension 1+2): A round world with white, black, and gray daisies.
-    TestRaisingAndLoweringLuminosity(true, true, "white_black_and_gray_round.csv", 0.5, 1.7, 0.01, 500, true, true);
+    TestRaisingAndLoweringLuminosity(true, true, "data/white_black_and_gray_round.csv", 0.5, 1.7, 0.01, 500, true, true);
 };

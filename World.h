@@ -288,9 +288,11 @@ class World : emp::World<float> {
      * Calculates the local temperature of the flowers depending on global temperatue, their albedo, and the latitude of this patch of flowers
      * @param color The color of the local flowers
      * @param latitude The latitude on the planet, ranging from 0 (polar) to 99 (equitorial)
+     * @param latitudinalConduction Of the temperature influence conducting from elsewhere on the planet, what proportion comes
+     * from the latitudinal temperature?
      * @returns the local temperature over areas with flowers of that color
      */
-    float LocalTemperatureAtLatitude(int color, int latitude) {
+    float LocalTemperatureAtLatitude(int color, int latitude, float latitudinalConduction = 0.0) {
         // based on equation (7) of Daisyworld, adapted to a planet with multiple latitudes and thus multiple solar luminosities
         float globalAlbedo = GetTotalAlbedo();
         float globalTemperature = GetGlobalTemperature();
@@ -298,7 +300,8 @@ class World : emp::World<float> {
         float localAlbedo = flowerAlbedos[color];
         float localAbsorbtivity = 1 - localAlbedo;
         float scaledLocalAbsorbtivity = localAbsorbtivity * GetLuminosityMultiplierAtLatitude(latitude);
-        return conductivityConstant * (scaledLocalAbsorbtivity - globalAbsorbtivity) + globalTemperature;
+        float conductingTemperature = latitudinalConduction == 0.0 ? globalTemperature : latitudinalConduction * TemperatureOfLatitude(latitude) + (1 - latitudinalConduction) * globalTemperature;
+        return conductivityConstant * (scaledLocalAbsorbtivity - globalAbsorbtivity) + conductingTemperature;
     }
 
     /**
