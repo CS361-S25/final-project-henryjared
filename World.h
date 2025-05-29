@@ -515,6 +515,13 @@ class World : emp::World<float> {
     float GetSolarLuminosity() {
         return solarLuminosity;
     }
+  
+    /** 
+     * 
+     */
+    void SetRoundWorld(bool _roundworld) {
+        roundWorld = _roundworld;
+    }
 
     /**
      * @returns the proportion of the world that is covered by white daisies, from 0 to 1. On a round world,

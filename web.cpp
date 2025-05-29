@@ -69,6 +69,7 @@ public:
         
         world.SetSolarLuminosity(luminosity);
         world.SetGrayEnabled(grayEnabled);
+        world.SetRoundWorld(latSim);
 
         doc << canvas;
         buttons << GetToggleButton("Toggle");
@@ -88,37 +89,85 @@ public:
 
         emp::Random random{444};
 
-        // Calculate the number of each color
-        int total_cells = num_h_boxes * num_w_boxes;
-        int num_black = (total_cells * world.GetProportionBlack());
-        int num_white = (total_cells * world.GetProportionWhite());
-        int num_gray = (total_cells * world.GetProportionGray());
-        std::cout << std::to_string(num_gray) << std::endl;
-        int num_green = total_cells - num_black - num_white - num_gray;
+        if (!latSim) {
 
-        // Create a flat vector to represent all cells
-        std::vector<std::string> cells;
-        cells.insert(cells.end(), num_black, "black");
-        cells.insert(cells.end(), num_green, "green");
-        cells.insert(cells.end(), num_gray, "gray");
-        cells.insert(cells.end(), num_white, "white");
-        
+            // Calculate the number of each color
+            int total_cells = num_h_boxes * num_w_boxes;
+            int num_black = (total_cells * world.GetProportionBlack());
+            int num_white = (total_cells * world.GetProportionWhite());
+            int num_gray = (total_cells * world.GetProportionGray());
+            std::cout << std::to_string(num_gray) << std::endl;
+            int num_green = total_cells - num_black - num_white - num_gray;
 
-        // Shuffle the cells for random placement
-        for (int i = cells.size() - 1; i > 0; --i) {
-            int j = random.GetUInt(i + 1);
-            std::swap(cells[i], cells[j]);
+            // Create a flat vector to represent all cells
+            std::vector<std::string> cells;
+            cells.insert(cells.end(), num_black, "black");
+            cells.insert(cells.end(), num_green, "green");
+            cells.insert(cells.end(), num_gray, "gray");
+            cells.insert(cells.end(), num_white, "white");
+            
+
+            // Shuffle the cells for random placement
+            for (int i = cells.size() - 1; i > 0; --i) {
+                int j = random.GetUInt(i + 1);
+                std::swap(cells[i], cells[j]);
+            }
+
+            // Fill the grid with shuffled cells
+            grid.resize(num_h_boxes, std::vector<std::string>(num_w_boxes));
+            int idx = 0;
+            for (int y = 0; y < num_h_boxes; ++y) {
+                for (int x = 0; x < num_w_boxes; ++x) {
+                    grid[y][x] = cells[idx++];
+                }
+            }
+
         }
 
-        // Fill the grid with shuffled cells
-        grid.resize(num_h_boxes, std::vector<std::string>(num_w_boxes));
-        int idx = 0;
-        for (int y = 0; y < num_h_boxes; ++y) {
-            for (int x = 0; x < num_w_boxes; ++x) {
-                grid[y][x] = cells[idx++];
+        else {
+
+            // Each row represents a latitude band
+            // Ensure grid has correct dimensions
+            grid.resize(num_h_boxes, std::vector<std::string>(num_w_boxes));
+            
+            for (int lat = 0; lat < num_h_boxes; ++lat) {
+                std::vector<std::string> row_cells;
+
+                int num_black = (num_w_boxes * world.GetProportionBlackAtLatitude(lat));
+                int num_white = (num_w_boxes * world.GetProportionWhiteAtLatitude(lat));
+                int num_gray  = (num_w_boxes * world.GetProportionGrayAtLatitude(lat));
+                int num_green = num_w_boxes - num_black - num_white - num_gray;
+
+                doc << "num_black at lat " << lat << ": " << num_black << "<br>";
+
+
+                // Add the correct number of each color
+                row_cells.insert(row_cells.end(), num_black, "black");
+                row_cells.insert(row_cells.end(), num_green, "green");
+                row_cells.insert(row_cells.end(), num_gray,  "gray");
+                row_cells.insert(row_cells.end(), num_white, "white");
+
+                // If rounding errors, trim or pad to exactly num_w_boxes (10)
+                if (row_cells.size() > num_w_boxes) {
+                    row_cells.resize(num_w_boxes);
+                } else if (row_cells.size() < num_w_boxes) {
+                    row_cells.insert(row_cells.end(), num_w_boxes - row_cells.size(), "green");
+                }
+
+                // Shuffle the row for random placement
+                for (int i = row_cells.size() - 1; i > 0; --i) {
+                    int j = random.GetUInt(i + 1);
+                    std::swap(row_cells[i], row_cells[j]);
+                }
+
+                grid.resize(num_h_boxes, std::vector<std::string>(num_w_boxes));
+                for (int x = 0; x < num_w_boxes; ++x) {
+                    grid[lat][x] = row_cells[x];
+                }
             }
         }
     }
+
 
     /**
      * @brief Draws the current grid state onto the canvas.
