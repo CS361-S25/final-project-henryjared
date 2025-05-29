@@ -517,10 +517,33 @@ class World : emp::World<float> {
     }
   
     /** 
-     * 
+     * Sets whether the world is round (has different latitudes) or not. When changing world types, moves the current daisy proportions over.
      */
-    void SetRoundWorld(bool _roundworld) {
-        roundWorld = _roundworld;
+    void SetRoundWorld(bool _roundWorld) {
+        if (roundWorld != _roundWorld) {
+            // we are changing the roundness
+            if (_roundWorld) {
+                // going from flat to round world, distribute flowers homogeneously
+                for (int latitude = 0; latitude < numberOfLatitudes; latitude++) {
+                    for (int color = 0; color < COLORS; color++) {
+                        groundAtLatitudes[latitude].proportion[color] = ground.proportion[color];
+                    }
+                }
+            } else {
+                // going from round to flat world, aggregate values from all latitudes
+                for (int color = 0; color < COLORS; color++) {
+                    ground.proportion[color] = Proportion(color, -1);
+                }
+            }
+            roundWorld = _roundWorld;
+        }
+    }
+
+    /**
+     * @returns Whether the world is round
+     */
+    bool IsWorldRound() {
+        return roundWorld;
     }
 
     /**
