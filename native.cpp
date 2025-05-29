@@ -26,7 +26,7 @@ void TestConstantLuminosityOnlyBlack() {
     world.SetWhiteEnabled(false);
 
     // output data every 1 time unit
-    world.SetupDataFile("constant_luminosity_black.csv").SetTimingRepeat(world.GetUpdatesPerTimeUnit());
+    world.SetupDataFile("data/constant_luminosity_black.csv").SetTimingRepeat(world.GetUpdatesPerTimeUnit());
 
     // update the world for 100 time units
     for (int i=0; i<world.GetUpdatesPerTimeUnit() * 100 + 1; i++) {
@@ -47,7 +47,7 @@ void TestConstantLuminosityBlackAndWhite() {
     World world(0.5, 0.5, 1);
 
     // output data every 1 time unit
-    world.SetupDataFile("constant_luminosity_black_and_white.csv").SetTimingRepeat(world.GetUpdatesPerTimeUnit());
+    world.SetupDataFile("data/constant_luminosity_black_and_white.csv").SetTimingRepeat(world.GetUpdatesPerTimeUnit());
     
     // update the world for 100 time units
     for (int i=0; i<world.GetUpdatesPerTimeUnit() * 100 + 1; i++) {
