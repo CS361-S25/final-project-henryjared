@@ -41,7 +41,7 @@ class Animator : public emp::web::Animate {
 
     emp::web::Canvas canvas{width, height, "canvas"};
 
-    World world{0.5, 0.5, 1};
+    World world{0, 0, 1};
 
     // 2D grid to store the color of each cell
     std::vector<std::vector<std::string>> grid;
@@ -270,18 +270,22 @@ public:
             std::stringstream ss;
             ss << "<div style='width:100%; display:flex; flex-direction:column; align-items:center;'>";
             ss << "<div style='width:" << bar_width << "px; height:" << bar_height << "px; background:#eee; border-radius:6px; overflow:hidden; display:flex;'>";
-            if (black_w > 0) ss << "<div style='width:" << black_w << "px; background:#222; height:100%;'></div>";
-            if (gray_w  > 0) ss << "<div style='width:" << gray_w  << "px; background:#888; height:100%;'></div>";
-            if (white_w > 0) ss << "<div style='width:" << white_w << "px; background:#ccc; height:100%;'></div>";
-            if (green_w > 0) ss << "<div style='width:" << green_w << "px; background:#4c8c3b; height:100%;'></div>";
+            if (black_w > 1) ss << "<div style='width:" << black_w << "px; background:#222; height:100%;'></div>";
+            if (grayEnabled) {
+                if (gray_w  > 1) ss << "<div style='width:" << gray_w  << "px; background:#888; height:100%;'></div>";
+            }
+            if (white_w > 1) ss << "<div style='width:" << white_w << "px; background:#ccc; height:100%;'></div>";
+            if (green_w > 1) ss << "<div style='width:" << green_w << "px; background:#4c8c3b; height:100%;'></div>";
             ss << "</div>";
 
             // Add labels below the bar
             ss << "<div style='font-size:1em; margin-top:4px; text-align:center;'>";
             ss << "<span style='color:#222;'>Black: <b>" << std::fixed << std::setprecision(1) << (black * 100) << "%</b></span> &nbsp; ";
-            ss << "<span style='color:#888;'>Gray: <b>" << std::fixed << std::setprecision(1) << (gray * 100) << "%</b></span> &nbsp; ";
-            ss << "<span style='color:#ccc;'>White: <b>" << std::fixed << std::setprecision(1) << (white * 100) << "%</b></span> &nbsp; ";
-            ss << "<span style='color:#4c8c3b;'>Green: <b>" << std::fixed << std::setprecision(1) << (green * 100) << "%</b></span>";
+            if (grayEnabled) {
+                ss << "<span style='color:#222;'>Gray: <b>" << std::fixed << std::setprecision(1) << (gray * 100) << "%</b></span> &nbsp; ";
+            }
+            ss << "<span style='color:#222;'>White: <b>" << std::fixed << std::setprecision(1) << (white * 100) << "%</b></span> &nbsp; ";
+            ss << "<span style='color:#222;'>Green: <b>" << std::fixed << std::setprecision(1) << (green * 100) << "%</b></span>";
             ss << "</div>";
             ss << "</div>";
 
