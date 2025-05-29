@@ -148,6 +148,13 @@ class World : emp::World<float> {
         update = 0;
     }
 
+    /** 
+     * 
+     */
+    void SetRoundWorld(bool _roundworld) {
+        roundWorld = _roundworld;
+    }
+
     /**
      * What proportion of the sun's aggregate luminosity translates into sunlight shining on this latitude.
      * @param latitude The latitude on the planet. Ranges from 0 to 9, where 0 is polar and 9 is equatorial.
