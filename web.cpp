@@ -138,7 +138,7 @@ public:
                 int num_gray  = (num_w_boxes * world.GetProportionGrayAtLatitude(lat));
                 int num_green = num_w_boxes - num_black - num_white - num_gray;
 
-                doc << "num_black at lat " << lat << ": " << num_black << "<br>";
+                // doc << "num_black at lat " << lat << ": " << num_black << "<br>";
 
 
                 // Add the correct number of each color
