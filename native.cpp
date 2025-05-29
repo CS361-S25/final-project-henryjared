@@ -12,12 +12,6 @@ void TestTemperatureCalculations() {
     std::cout << "Global Albedo: " << world.GetTotalAlbedo() << std::endl;
     // expected output: about 26
     std::cout << "Global Temperature: " << world.GetGlobalTemperature() << std::endl;
-
-    // expected output: around 31
-    std::cout << "Temperature of Black Daisies: " << world.GetTemperatureOfAlbedo(0.75) << std::endl;
-    
-    // expected output: around 21
-    std::cout << "Temperature of White Daisies: " << world.GetTemperatureOfAlbedo(0.25) << std::endl;
 }
 
 /**
@@ -108,6 +102,7 @@ void TestRaisingAndLoweringLuminosity(bool whiteEnabled, bool blackEnabled, std:
     world.SetWhiteEnabled(whiteEnabled);
     world.SetBlackEnabled(blackEnabled);
     world.SetGrayEnabled(grayEnabled);
+    // std::cout << "Conducting new test. Starting white = " << std::to_string(world.GetProportionWhite()) << ", starting black = " << std::to_string(world.GetProportionBlack()) << ", starting gray = " << std::to_string(world.GetProportionGray()) << std::endl;
     // how many updates to do before switching the luminosity
     int updatesPerLuminosity = timePerLuminosity * world.GetUpdatesPerTimeUnit();
     // record data once per luminosity, at the last update where the world is that luminosity
