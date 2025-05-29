@@ -247,6 +247,49 @@ public:
         world.BoostDaisiesIfExtinct();
     }
 
+        void UpdateProportions() {
+            float black = world.GetProportionBlack();
+            float white = world.GetProportionWhite();
+            float gray = world.GetProportionGray();
+            float green = 1.0f - black - white - gray;
+
+            // Clamp values to [0,1] and ensure sum is 1
+            black = std::max(0.0f, std::min(1.0f, black));
+            white = std::max(0.0f, std::min(1.0f, white));
+            gray  = std::max(0.0f, std::min(1.0f, gray));
+            green = std::max(0.0f, std::min(1.0f, green));
+
+            int bar_width = 300;
+            int bar_height = 24;
+
+            int black_w = static_cast<int>(bar_width * black);
+            int white_w = static_cast<int>(bar_width * white);
+            int gray_w  = static_cast<int>(bar_width * gray);
+            int green_w = bar_width - black_w - white_w - gray_w;
+
+            std::stringstream ss;
+            ss << "<div style='width:100%; display:flex; flex-direction:column; align-items:center;'>";
+            ss << "<div style='width:" << bar_width << "px; height:" << bar_height << "px; background:#eee; border-radius:6px; overflow:hidden; display:flex;'>";
+            if (black_w > 0) ss << "<div style='width:" << black_w << "px; background:#222; height:100%;'></div>";
+            if (white_w > 0) ss << "<div style='width:" << white_w << "px; background:#ccc; height:100%;'></div>";
+            if (gray_w  > 0) ss << "<div style='width:" << gray_w  << "px; background:#888; height:100%;'></div>";
+            if (green_w > 0) ss << "<div style='width:" << green_w << "px; background:#4c8c3b; height:100%;'></div>";
+            ss << "</div>";
+
+            // Add labels below the bar
+            ss << "<div style='font-size:1em; margin-top:4px; text-align:center;'>";
+            ss << "<span style='color:#222;'>Black: <b>" << std::fixed << std::setprecision(1) << (black * 100) << "%</b></span> &nbsp; ";
+            ss << "<span style='color:#ccc;'>White: <b>" << std::fixed << std::setprecision(1) << (white * 100) << "%</b></span> &nbsp; ";
+            ss << "<span style='color:#888;'>Gray: <b>" << std::fixed << std::setprecision(1) << (gray * 100) << "%</b></span> &nbsp; ";
+            ss << "<span style='color:#4c8c3b;'>Green: <b>" << std::fixed << std::setprecision(1) << (green * 100) << "%</b></span>";
+            ss << "</div>";
+            ss << "</div>";
+
+            emp::web::Document doc_prop("proportions");
+            doc_prop.Clear();
+            doc_prop << ss.str();
+        }
+
     /**
      * @brief Updates the sun visualization in the web interface based on the current solar luminosity.
      *
@@ -294,6 +337,7 @@ public:
         Draw();
         UpdateThermometer();
         UpdateSun();
+        UpdateProportions();
         UpdateLuminosity();
     }
 };
