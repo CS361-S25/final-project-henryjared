@@ -300,8 +300,20 @@ class World : emp::World<float> {
         float localAlbedo = flowerAlbedos[color];
         float localAbsorbtivity = 1 - localAlbedo;
         float scaledLocalAbsorbtivity = localAbsorbtivity * GetLuminosityMultiplierAtLatitude(latitude);
-        float conductingTemperature = latitudinalConduction == 0.0 ? globalTemperature : latitudinalConduction * TemperatureOfLatitude(latitude) + (1 - latitudinalConduction) * globalTemperature;
+        float conductingTemperature = latitudinalConduction == 0.0 ? globalTemperature : latitudinalConduction * TemperatureOfInternalLatitude(latitude) + (1 - latitudinalConduction) * globalTemperature;
         return conductivityConstant * (scaledLocalAbsorbtivity - globalAbsorbtivity) + conductingTemperature;
+    }
+
+    /**
+     * Calculates the average temperature across daisy types at this latitude
+     */
+    float TemperatureOfInternalLatitude(int internalLatitude) {
+        // based on equation (4) of Daisyworld
+        float latitudinalAlbedo = groundAtLatitudes[internalLatitude].GetTotalAlbedo();
+        float latitudalAbsorbtivity = 1 - latitudalAbsorbtivity;
+        int latitudesPerBand = numberOfLatitudes / numberOfDisplayedLatitudes;
+        float scaledLatitudalAbsorbtivity = latitudalAbsorbtivity * GetLuminosityMultiplierAtLatitude(internalLatitude);
+        return std::pow((fluxConstant * solarLuminosity * scaledLatitudalAbsorbtivity) / stefansConstant, 0.25) - celsiusToKelvin;
     }
 
     /**
@@ -494,13 +506,19 @@ class World : emp::World<float> {
     }
 
     /**
-     * Gets the average temperature at one latitude on the planet
-     * @param latitude The latitude on the planet, ranging from 0 (polar) to 9 (equitorial)
+     * Gets the average temperature at a display latitude band on the round planet
+     * @param displayLatitude The displayed latitude on the planet, ranging from 0 (equatorial) to 9 (polar)
      */
-    float TemperatureOfLatitude(int latitude) {
+    float TemperatureOfLatitude(int displayLatitude) {
         // based on equation (4) of Daisyworld
-        float latitudalAbsorbtivity = 1 - groundAtLatitudes[latitude].GetTotalAlbedo();
-        float scaledLatitudalAbsorbtivity = latitudalAbsorbtivity * GetLuminosityMultiplierAtLatitude(latitude);
+        float latitudinalAlbedo = 0.0;
+        for (int i=-1; i<COLORS; i++) {
+            latitudinalAlbedo += (i < 0 ? groundAlbedo : flowerAlbedos[i]) * Proportion(i, displayLatitude);
+        }
+        float latitudalAbsorbtivity = 1 - latitudalAbsorbtivity;
+        int latitudesPerBand = numberOfLatitudes / numberOfDisplayedLatitudes;
+        int internalLatitude = numberOfLatitudes - latitudesPerBand * displayLatitude - latitudesPerBand / 2;
+        float scaledLatitudalAbsorbtivity = latitudalAbsorbtivity * GetLuminosityMultiplierAtLatitude(internalLatitude);
         return std::pow((fluxConstant * solarLuminosity * scaledLatitudalAbsorbtivity) / stefansConstant, 0.25) - celsiusToKelvin;
     }
 
