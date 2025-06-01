@@ -4,9 +4,9 @@
 #include "emp/config/ArgManager.hpp"
 
 EMP_BUILD_CONFIG(MyConfigType,
-    VALUE(LUMINOSITY, float, 0.5, "What value should the luminosity be?"),
-    VALUE(ENABLE_GRAY, bool, false, "Whether to allow gray daisies to grow"),
-    VALUE(ENABLE_LAT, bool, false, "Whether to run latitude simulation or no")
+    VALUE(LUMINOSITY, float, 0.5, "Change the value of the solar luminosity. See how Daisyworld looks at different luminosities!"),
+    VALUE(ADD_GRAY_DAISIES, bool, false, "Add a gray daisy to Daisyworld. See how the temperature proportion of daisies changes!"),
+    VALUE(LATITUDE_SIMULATION, bool, false, "Simulate a Daisyworld with different latitudes. See how the growth pattern of daisies changes!")
 )
 
 #endif

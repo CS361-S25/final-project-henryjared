@@ -64,8 +64,8 @@ public:
         config_panel.SetRange("LUMINOSITY", "0.5", "1.7");
 
         luminosity = config.LUMINOSITY();
-        grayEnabled = config.ENABLE_GRAY();
-        latSim = config.ENABLE_LAT();
+        grayEnabled = config.ADD_GRAY_DAISIES();
+        latSim = config.LATITUDE_SIMULATION();
         
         world.SetSolarLuminosity(luminosity);
         world.SetGrayEnabled(grayEnabled);
