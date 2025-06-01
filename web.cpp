@@ -334,7 +334,7 @@ public:
 
             emp::web::Document doc_latgrad("lat-gradient");
             doc_latgrad << R"(
-            <div style='position:relative; width:18px; height:300px; background:linear-gradient(to bottom, #ff3333 0%, #ffff66 50%, #3399ff 100%); border-radius:8px; border:1px solid #bbb; margin-left:20px;'>
+            <div style='position:relative; width:18px; height:300px; background:linear-gradient(to bottom, #ff3333 0%, #ffff66 50%, #3399ff 100%); border-radius:8px; border:1px solid #bbb; margin-left:5px;'>
                 <div style='position:absolute;top:0;left:20px;font-size:0.9em;color:#444;white-space:nowrap;'>Equator 🌞</div>
                 <div style='position:absolute;bottom:0;left:20px;font-size:0.9em;color:#444;white-space:nowrap;'>Pole ❄️</div>
             </div>
