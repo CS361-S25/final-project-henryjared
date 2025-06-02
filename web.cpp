@@ -14,6 +14,7 @@
 
 emp::web::Document doc{"target"};
 emp::web::Document buttons("buttons");
+emp::web::Document config_p("config_p");
 MyConfigType config;
 
 class Animator : public emp::web::Animate {
@@ -74,7 +75,7 @@ public:
         doc << canvas;
         buttons << GetToggleButton("Toggle");
         buttons << GetStepButton("Step");
-        buttons << config_panel;
+        config_p << config_panel;
         UpdateGrid();
     }
 
@@ -215,7 +216,7 @@ public:
         float percent = (temp - min_temp) / (max_temp - min_temp);
         percent = std::max(0.0f, std::min(1.0f, percent)); // Clamp between 0 and 1
 
-        int bar_height = 150;
+        int bar_height = 200;
         int fill_height = static_cast<int>(bar_height * percent);
 
         std::stringstream ss;
@@ -309,7 +310,7 @@ public:
         percent = std::max(0.0f, std::min(1.0f, percent));
 
         // Sun size
-        int radius = 60;
+        int radius = 80;
 
         // Color: from yellow (255,255,0) to white (255,255,255)
         int color_val = static_cast<int>(percent * 255); // 0-255 for blue component
@@ -317,9 +318,9 @@ public:
         color << "rgb(255,255," << color_val << ")";
 
         std::stringstream ss;
-        ss << "<svg width='150' height='150'>";
-        ss << "<circle cx='60' cy='75' r='" << radius << "' fill='" << color.str() << "' stroke='#aaa'/>";
-        ss << "<text x='60' y='80' text-anchor='middle' font-size='20' fill='#333'>" 
+        ss << "<svg width='200' height='200'>";
+        ss << "<circle cx='95' cy='95' r='" << radius << "' fill='" << color.str() << "' stroke='#aaa'/>";
+        ss << "<text x='95' y='100' text-anchor='middle' font-size='20' fill='#333'>" 
         << std::setprecision(2) << std::fixed << lum << "</text>";
         ss << "</svg>";
 
@@ -335,8 +336,8 @@ public:
             emp::web::Document doc_latgrad("lat-gradient");
             doc_latgrad << R"(
             <div style='position:relative; width:18px; height:300px; background:linear-gradient(to bottom, #ff3333 0%, #ffff66 50%, #3399ff 100%); border-radius:8px; border:1px solid #bbb; margin-left:5px;'>
-                <div style='position:absolute;top:0;left:20px;font-size:0.9em;color:#444;white-space:nowrap;'>Equator 🌞</div>
-                <div style='position:absolute;bottom:0;left:20px;font-size:0.9em;color:#444;white-space:nowrap;'>Pole ❄️</div>
+                <div style='position:absolute;top:0;left:20px;font-size:0.9em;color:#444;white-space:nowrap;'>Equator</div>
+                <div style='position:absolute;bottom:0;left:20px;font-size:0.9em;color:#444;white-space:nowrap;'>Pole</div>
             </div>
             )";
         }
