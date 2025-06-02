@@ -47,7 +47,9 @@ class Animator : public emp::web::Animate {
     // 2D grid to store the color of each cell
     std::vector<std::vector<std::string>> grid;
 
+    bool blackEnabled;
     bool grayEnabled;
+    bool whiteEnabled;
     bool latSim;
 
 public:
@@ -65,11 +67,15 @@ public:
         config_panel.SetRange("LUMINOSITY", "0.5", "1.7");
 
         luminosity = config.LUMINOSITY();
+        blackEnabled = config.ADD_BLACK_DAISIES();
         grayEnabled = config.ADD_GRAY_DAISIES();
+        whiteEnabled = config.ADD_WHITE_DAISIES();
         latSim = config.LATITUDE_SIMULATION();
         
         world.SetSolarLuminosity(luminosity);
+        world.SetBlackEnabled(blackEnabled);
         world.SetGrayEnabled(grayEnabled);
+        world.SetWhiteEnabled(whiteEnabled);
         world.SetRoundWorld(latSim);
 
         doc << canvas;
@@ -271,21 +277,29 @@ public:
             std::stringstream ss;
             ss << "<div style='width:100%; display:flex; flex-direction:column; align-items:center;'>";
             ss << "<div style='width:" << bar_width << "px; height:" << bar_height << "px; background:#eee; border-radius:6px; overflow:hidden; display:flex;'>";
-            if (black_w > 1) ss << "<div style='width:" << black_w << "px; background:#222; height:100%;'></div>";
+            if (blackEnabled) {
+                if (black_w > 1) ss << "<div style='width:" << black_w << "px; background:#222; height:100%;'></div>";
+            }
             if (grayEnabled) {
                 if (gray_w  > 1) ss << "<div style='width:" << gray_w  << "px; background:#888; height:100%;'></div>";
             }
-            if (white_w > 1) ss << "<div style='width:" << white_w << "px; background:#ccc; height:100%;'></div>";
+            if (whiteEnabled) {
+                if (white_w > 1) ss << "<div style='width:" << white_w << "px; background:#ccc; height:100%;'></div>";
+            }
             if (green_w > 1) ss << "<div style='width:" << green_w << "px; background:#4c8c3b; height:100%;'></div>";
             ss << "</div>";
 
             // Add labels below the bar
             ss << "<div style='font-size:1em; margin-top:4px; text-align:center;'>";
-            ss << "<span style='color:#222;'>Black: <b>" << std::fixed << std::setprecision(1) << (black * 100) << "%</b></span> &nbsp; ";
+            if (blackEnabled) {
+                ss << "<span style='color:#222;'>Black: <b>" << std::fixed << std::setprecision(1) << (black * 100) << "%</b></span> &nbsp; ";
+            }
             if (grayEnabled) {
                 ss << "<span style='color:#222;'>Gray: <b>" << std::fixed << std::setprecision(1) << (gray * 100) << "%</b></span> &nbsp; ";
             }
-            ss << "<span style='color:#222;'>White: <b>" << std::fixed << std::setprecision(1) << (white * 100) << "%</b></span> &nbsp; ";
+            if (whiteEnabled) {
+                ss << "<span style='color:#222;'>White: <b>" << std::fixed << std::setprecision(1) << (white * 100) << "%</b></span> &nbsp; ";
+            }
             ss << "<span style='color:#222;'>Green: <b>" << std::fixed << std::setprecision(1) << (green * 100) << "%</b></span>";
             ss << "</div>";
             ss << "</div>";
