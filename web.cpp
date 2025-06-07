@@ -343,10 +343,18 @@ public:
         doc_sun << ss.str();
     }
 
+    /**
+     * @brief Displays a latitude gradient bar when latitude simulation is enabled.
+     *
+     * This function updates the "lat-gradient" element in the web interface with a vertical
+     * color gradient representing temperature or sunlight from equator to pole. The gradient
+     * is only shown if latitude simulation is enabled.
+     */
     void latitudeSim() {
 
         if (latSim) {
 
+            // Create or update the latitude gradient bar in the UI
             emp::web::Document doc_latgrad("lat-gradient");
             doc_latgrad << R"(
             <div style='position:relative; width:18px; height:300px; background:linear-gradient(to bottom, #ff3333 0%, #ffff66 50%, #3399ff 100%); border-radius:8px; border:1px solid #bbb; margin-left:5px;'>
