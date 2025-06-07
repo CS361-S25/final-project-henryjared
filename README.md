@@ -1,4 +1,4 @@
-# Daisyworld Simulation ![White Daisy](images/title_flower.png)
+# Daisyworld Simulation ![White Daisy](images/white_daisy.png)
 
 This project is a reimplementation and extension of the classic Daisyworld model by Watson & Lovelock (1983), built as an interactive web simulation.
 
